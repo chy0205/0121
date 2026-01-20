@@ -1,701 +1,559 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<!-- 設定 viewport 確保網頁在移動裝置上能正確縮放 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>聖訓小卡生成</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>崇華十六期整合管理系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', '標楷體', sans-serif;
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+            margin: 0;
+            padding-bottom: 80px; 
+        }
 
-<!-- 載入 html-to-image 函式庫，用於將 HTML 元素轉換為圖片 (DOM 截圖) -->
-<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.12/dist/html-to-image.min.js"></script>
-<!-- 載入 JSZip 函式庫，用於將多個圖片打包成一個 ZIP 壓縮檔 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<!-- 載入 FileSaver.js 函式庫，用於在瀏覽器端觸發檔案下載流程 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
 
-<!-- 引入 Google Fonts 的 Noto Serif TC (思源宋體 繁體中文)，作為標楷體的備用字體 -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght%40400%3B700&display=swap" rel="stylesheet" crossorigin="anonymous">
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
 
-<style>
-/* ---------------------------------------------------- */
-/* ★ 全域樣式設定 (Global Styles) ★                        */
-/* ---------------------------------------------------- */
-body {
-    /* 字體設定：優先使用使用者系統內建的「標楷體」或其常見別名，以符合書寫風格。
-       如果都找不到，則使用思源宋體 (Noto Serif TC)。 */
-    font-family: "標楷體", "DFKai-SB", "KaiTi", 'Noto Serif TC', serif;
-    background-color: #f0f0f0; /* 頁面背景色 */
-    margin: 0; padding: 20px; /* 頁面邊距 */
-    display: flex; /* 使用 Flexbox 進行佈局 */
-    flex-direction: column; /* 垂直排列子元素 */
-    align-items: center; /* 水平居中對齊 */
-    min-height: 100vh; /* 確保內容區塊至少佔滿整個視窗高度 */
-}
-.main-container {
-    width: 90%; max-width: 1200px; /* 設定最大寬度並居中 */
-    padding: 20px;
-    background: #fff; /* 白色背景 */
-    border-radius: 12px; /* 圓角邊框 */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 陰影效果 */
-}
-#controls {
-    display: flex; gap: 15px; /* 控制項間距 */
-    margin-bottom: 15px;
-    flex-wrap: wrap; /* 允許控制項在小螢幕上換行 */
-}
-.control-group { display: flex; flex-direction: column; } /* 控制項分組，垂直排列 Label 和 Select */
-/* 下拉選單和按鈕的基礎樣式 */
-select, button {
-    padding: 8px 10px;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-family: inherit; /* 繼承 body 的字體設定，確保中文字體一致 */
-}
-.action-buttons {
-    display: flex;
-    gap: 15px;
-    align-items: flex-end; /* 底部對齊，讓按鈕與下拉選單的底部對齊 */
-}
-#resultsContainer {
-    display: flex; gap: 20px;
-    overflow-x: auto; /* 允許水平滾動查看所有生成的圖片預覽 */
-    padding: 10px 0;
-    min-height: 500px; /* 確保結果容器有足夠高度，避免內容跳動 */
-}
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
 
-/* ---------------------------------------------------- */
-/* ★ 直式圖檔生成區塊樣式 (截圖目標: .result-item) ★        */
-/* ---------------------------------------------------- */
-.result-item {
-    /* 固定的圖片尺寸：720x1280 像素，常見的直式手機螢幕比例，這是截圖的邊界 */
-    width: 720px;
-    height: 1280px;
-    min-width: 720px;
-    min-height: 1280px;
-    position: relative; /* 設置相對定位，以容納絕對定位的文字和圖片 */
-    box-sizing: border-box; /* 確保 padding/border 不會增加總尺寸 */
-    border: none; 
-    border-radius: 0;
-    overflow: hidden; /* 確保內容在截圖邊界內 */
-}
+        .nav-item.active { color: #10b981; }
+        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
 
-/* 背景圖片樣式 */
-.result-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* 確保圖片不變形地適應容器 */
-    position: absolute;
-    top: 0; left: 0;
-    z-index: 1; /* 位於下層，作為背景 */
-}
+        .btn-primary {
+            background-color: #10b981;
+            color: white;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
 
-/* 文字內容區塊 - 實作直式書寫 */
-.content-block {
-    position: absolute;
-    z-index: 2; /* 位於上層，覆蓋背景圖片 */
+        .btn-primary:hover:not(:disabled) { background-color: #059669; transform: translateY(-1px); }
+        .btn-primary:active:not(:disabled) { transform: translateY(1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* 調整定位：直式書寫從右側開始，稍微從邊緣內縮 */
-    top: 40px; 
-    right: 5px; 
+        .question-card { border-left: 4px solid #10b981; background: white; }
+        .options label {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
 
-    height: calc(100% - 50px); /* 垂直方向的長度（即字行的高度） */
-    width: calc(100% - 10px); /* 水平方向的寬度（即字行數量的空間） */
-    overflow: hidden; /* 防止文字溢出容器 */
+        #timer-bar { position: sticky; top: 0; z-index: 40; background: #ecfdf5; color: #065f46; border-bottom: 1px solid #a7f3d0; }
+        .hidden-view { display: none; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    /* ★ 核心：設定直式書寫模式（從右向左，即列從右邊開始排） */
-    writing-mode: vertical-rl;
-    /* 確保所有字元（包括數字和英文字母）都保持直立，不旋轉 90 度 */
-    text-orientation: upright;
-    
-    font-family: "標楷體", "DFKai-SB", "KaiTi", 'Noto Serif TC', serif;
-    font-size: 32px; /* 基礎字體大小 */
-    line-height: 1.2; /* 行距 (控制字行之間的垂直距離) */
-    letter-spacing: 10px; /* 基礎字元間距 (控制字元間的水平距離) */
-    white-space: pre-wrap; /* 允許文字保留原始換行符 (\n) 且自動換行 */
-    word-break: break-word; /* 允許長單詞或連續字符在任何位置斷開 */
-
-    color: #333;
-    /* 輕微的文字陰影，讓文字在複雜背景圖片上更清晰，增強可讀性 */
-    text-shadow: 0 0 3px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2); 
-}
-
-/* 區域文字的樣式：字體較小 */
-.small-text {
-    font-size: 20px;
-    font-family: "標楷體", "DFKai-SB", "KaiTi", 'Noto Serif TC', serif;
-}
-
-/* 專門用於對齊的 span 元素，需要設定 display: inline-block 才能應用 letter-spacing */
-/* 這是實現標題兩行文字「長度一致」對齊的核心 CSS 元素 */
-.content-block span {
-    display: inline-block;
-}
-
-/* 下載按鈕的樣式和定位 */
-.download-button-wrapper {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    z-index: 5; /* 確保按鈕在最上層 */
-    writing-mode: horizontal-tb; /* 確保按鈕文字是橫式，不被直式書寫影響 */
-}
-
-/* (其他按鈕樣式保持不變...) */
-.btn-style {
-    background-color: #4CAF50; /* 按鈕基本顏色 */
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.btn-style:hover {
-    background-color: #45a049;
-}
-/* 下載全部按鈕的特殊樣式 */
-#downloadAllBtn {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-}
-#downloadAllBtn:hover {
-    background-color: #0056b3;
-}
-#downloadAllBtn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-/* 媒體查詢：適應手機螢幕，將預覽圖縮小 */
-@media (max-width: 768px) {
-    .result-item {
-        width: 300px;
-        height: 400px;
-    }
-}
-</style>
+        /* 詳解彈窗樣式 */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            border-radius: 20px;
+            overflow-y: auto;
+            padding: 24px;
+        }
+    </style>
 </head>
 <body>
 
-<div class="main-container">
-    <h1 style="text-align:center; margin-bottom:10px;">聖訓小卡生成</h1>
+    <header class="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-emerald-600">崇華十六期管理系統</h1>
+        <div id="user-display" class="text-sm font-medium text-slate-600 hidden">
+            <span id="display-name">載入中...</span>
+            <button onclick="logout()" class="ml-2 text-red-500 hover:underline">登出</button>
+        </div>
+    </header>
 
-    <div id="controls">
-        <div class="control-group">
-            <label>選擇欄位:</label>
-            <select id="filterField">
-                <option value="班期">班期</option>
-                <option value="日期">日期</option>
-                <option value="仙佛">仙佛</option>
-                <option value="姓名">姓名</option>
-                <option value="內容">內容</option>
-                <option value="區域">區域</option>
-            </select>
+    <main class="container mx-auto max-w-2xl p-4">
+
+        <!-- 登入介面 -->
+        <div id="view-login" class="fade-in py-10">
+            <div class="glass-card rounded-2xl p-8 text-center">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6">學員登入</h2>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">組別</label>
+                        <select id="login-group" class="w-full p-3 rounded-lg border border-slate-200 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">姓名</label>
+                        <select id="login-name" disabled class="w-full p-3 rounded-lg border border-slate-200 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">密碼</label>
+                        <input type="password" id="login-pass" class="w-full p-3 rounded-lg border border-slate-200 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <button onclick="handleLogin()" id="login-btn" class="w-full py-3 btn-primary rounded-lg font-bold">進入系統</button>
+                    <div class="text-center mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="switchView('register')" class="text-sm text-emerald-600 font-bold hover:underline">初次使用？註冊設定密碼</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="control-group">
-            <label>選擇值:</label>
-            <!-- 預設禁用，等資料載入後啟用 -->
-            <select id="filterValueSelect" disabled>
-                <option value="">請先選欄位</option>
-            </select>
+        <!-- 註冊介面 -->
+        <div id="view-register" class="hidden-view fade-in py-10">
+            <div class="glass-card rounded-2xl p-8">
+                <h2 class="text-2xl font-bold text-slate-800 text-center mb-6">帳號註冊</h2>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">選擇您的組別</label>
+                        <select id="reg-group" class="w-full p-3 rounded-lg border border-slate-200 mt-1"></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">選擇您的姓名</label>
+                        <select id="reg-name" disabled class="w-full p-3 rounded-lg border border-slate-200 mt-1"></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">設定登入密碼</label>
+                        <input type="password" id="reg-pass" placeholder="6 位數以上密碼" class="w-full p-3 rounded-lg border border-slate-200 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">再次確認密碼</label>
+                        <input type="password" id="reg-pass-confirm" placeholder="再次輸入密碼" class="w-full p-3 rounded-lg border border-slate-200 mt-1">
+                    </div>
+                    <button onclick="handleRegister()" id="reg-btn" class="w-full py-3 btn-primary rounded-lg font-bold">確認註冊並鎖定密碼</button>
+                    <button onclick="switchView('login')" class="w-full py-2 text-sm text-slate-400 hover:underline mt-2 text-center">返回登入</button>
+                </div>
+            </div>
         </div>
 
-        <div class="action-buttons">
-            <button class="btn-style" onclick="applyFilter()">開始篩選</button>
-            <!-- 下載所有圖片為 ZIP 檔案的按鈕 -->
-            <button id="downloadAllBtn" class="btn-style" onclick="downloadAllImages()" disabled>下載為 ZIP</button>
+        <!-- 簽到介面 -->
+        <div id="view-attendance" class="hidden-view fade-in py-6">
+            <div class="glass-card rounded-2xl p-8 text-center">
+                <h2 class="text-xl font-bold mb-2">每日簽到</h2>
+                <p id="today-date" class="text-slate-500 mb-6 font-mono"></p>
+                <div id="attendance-status" class="p-6 border-2 border-dashed border-slate-200 rounded-xl mb-6">
+                    <p class="text-slate-400">正在檢查簽到狀態...</p>
+                </div>
+                <button onclick="performSignIn()" id="signin-btn" class="w-full py-4 btn-primary rounded-xl text-lg font-bold hidden">立即簽到</button>
+            </div>
+        </div>
+
+        <!-- 測驗介面 -->
+        <div id="view-quiz" class="hidden-view fade-in">
+            <div id="quiz-init" class="glass-card rounded-2xl p-6 text-center">
+                <h2 class="text-xl font-bold mb-4">參加測驗</h2>
+                <select id="quiz-type-select" class="w-full p-3 mb-4 rounded-lg border border-slate-200">
+                    <option value="" disabled selected>請選擇科目</option>
+                    <option value="論語">論語</option><option value="性理">性理</option><option value="道德經">道德經</option><option value="六祖">六祖</option>
+                </select>
+                <button onclick="startQuizFlow()" class="w-full py-3 btn-primary rounded-lg font-bold">開始載入題目</button>
+            </div>
+            <div id="quiz-main" class="mt-4 hidden"><div id="quiz-content" class="space-y-6"></div></div>
+        </div>
+
+        <!-- 成績查詢介面 -->
+        <div id="view-results" class="hidden-view fade-in py-6">
+            <h2 class="text-xl font-bold mb-4">歷史成績查詢</h2>
+            <div id="history-list" class="space-y-4"></div>
+        </div>
+
+    </main>
+
+    <!-- 詳解彈窗 -->
+    <div id="detail-modal" class="modal" onclick="closeDetailModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 id="detail-title" class="text-xl font-bold">考試詳解</h3>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600">✕ 關閉</button>
+            </div>
+            <div id="detail-body" class="space-y-6"></div>
         </div>
     </div>
 
-    <!-- 用於顯示系統訊息或錯誤提示 -->
-    <div id="messageBox" style="margin-bottom: 10px;"></div>
-    <!-- 圖片結果預覽的容器 -->
-    <div id="resultsContainer"><p>請選擇篩選條件後點擊開始篩選。</p></div>
-</div>
+    <nav id="main-nav" class="nav-bar hidden">
+        <div class="nav-item active" onclick="switchView('attendance')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span>簽到</span>
+        </div>
+        <div class="nav-item" onclick="switchView('quiz')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>測驗</span>
+        </div>
+        <div class="nav-item" onclick="switchView('results')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v2M7 19h10m0 0a2 2 0 002-2v-3.586a1 1 0 01.293-.707l3.586-3.586a1 1 0 000-1.414l-3.586-3.586a1 1 0 01-.293-.707V5a2 2 0 00-2-2h-6"></path></svg>
+            <span>成績</span>
+        </div>
+    </nav>
 
-<script>
-// ----------------------------------------------------
-// ★ JavaScript 核心邏輯 ★
-// ----------------------------------------------------
+    <div id="message-box" class="fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[1000] hidden"></div>
 
-// Google Apps Script 部署的 URL，用於從 Google Sheets 獲取 JSON 資料
-const GS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPsok1XF4E4PQEmckvxK3pY8GPI1GeTrceC5Oz5deQbDMvmgtJxd1e-WcIV4GjgxZV3g/exec';
+    <script>
+        const SPREADSHEET_ID = '1u3D7u5hn7dcVGgGxmNBm233B_sz16kPuUcncvCnNr6U';
+        const TEAMS_GID = '1026036029';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHP1X2wE9iWiwm7Spm-C_H2OTdqpxuUihc13_xNAlEHVJzOviO4Xq7Q74DTUK015GW4A/exec';
+        const QUIZ_GIDS = { '隨堂': '0', '論語': '1250135497', '性理': '1342680959', '道德經': '1246480043', '六祖': '1302889740' };
 
-// 欄位名稱映射表，用於從下拉選單的值對應到 JSON 資料的鍵
-const fieldMap = {
-    "班期":"班期","日期":"日期","仙佛":"仙佛",
-    "姓名":"姓名","內容":"內容","區域":"區域"
-};
+        let currentUser = null; 
+        let teamsData = {};
+        let quizData = [];
+        let historyData = [];
 
-let globalSheetData = null; // 儲存從試算表載入的所有資料
-let downloadableItems = []; // 儲存所有待下載的圖片元素和檔名資訊
-// 獲取 DOM 元素實例，方便後續操作
-const messageBox = document.getElementById('messageBox');
-const resultsContainer = document.getElementById('resultsContainer');
-const downloadAllBtn = document.getElementById('downloadAllBtn');
-
-// ★ 字元對齊和間距相關常數 - 這是直式標題對齊的核心 ★
-const CHAR_FONT_SIZE_PX = 34; // 內容區塊的字體大小 (用於計算視覺空間)
-const BASE_LETTER_SPACING_PX = 10; // CSS 中 .content-block 設定的基礎字距
-// 一個字元在直式書寫中佔用的視覺空間 (字體大小 + 基礎字距)
-const VISUAL_CHAR_UNIT_PX = CHAR_FONT_SIZE_PX + BASE_LETTER_SPACING_PX; // 44px
-const ALIGN_MIN_TARGET_LEN = 15; // 當兩行標題都太短時，預設對齊的最小目標長度
-
-
-/**
- * 顯示訊息給使用者
- * @param {string} msg 訊息內容
- * @param {boolean} isError 是否為錯誤訊息 (決定顏色)
- */
-function displayMessage(msg, isError=false){
-    messageBox.textContent = msg;
-    // 根據是否為錯誤來設定訊息顏色
-    messageBox.style.color = isError ? 'red':'green';
-}
-// 清除訊息
-function hideMessage(){ messageBox.textContent=''; }
-
-/**
- * 針對直式書寫強制斷行，防止內容超出單行垂直空間 (圖片的高度)。
- * @param {string} text 原始文字
- * @param {number} maxCharsPerLine 每行最大字數 (根據 1280px 高度估算，調整此值可改變每列的字數)
- * @returns {string} 處理後的帶有換行符的文字
- */
-function forceVerticalLineBreak(text, maxCharsPerLine=21) { 
-    if (!text) return '';
-    // 將輸入文字按原始換行符 (\n) 分割成行
-    const originalLines = text.split('\n');
-    let processedLines = [];
-    
-    for (const line of originalLines) {
-        if (line.length > maxCharsPerLine) {
-            let tempLine = '';
-            let lineChunks = [];
-            // 逐字檢查，如果達到最大長度則強制換行
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (tempLine.length === maxCharsPerLine) {
-                    lineChunks.push(tempLine); // 推入已滿的一行
-                    tempLine = char; // 將當前字元作為新行的開頭
-                } else {
-                    tempLine += char;
-                }
-            }
-            if (tempLine.length > 0) lineChunks.push(tempLine); // 推入最後一行
-            // 將過長的行以換行符 (\n) 串接，使其在直式書寫中換到下一列
-            processedLines.push(lineChunks.join('\n'));
-        } else {
-            // 不足長度的行保持不變
-            processedLines.push(line);
-        }
-    }
-    // 將所有行以換行符串接回單一字串
-    return processedLines.join('\n');
-}
-
-/**
- * 根據最長行調整字元間距，以達到視覺上的垂直對齊 (長度一致)。
- * @param {string} text 要調整的文字內容 (日期或仙佛行)。
- * @param {number} targetLen 目標長度 (字元數)。
- * @returns {string} 包含 inline style 的 <span> HTML 字串或原始文字。
- */
-function generateAlignedSpan(text, targetLen) {
-    if (!text || text.trim().length === 0) return text;
-    const currentLen = text.length;
-
-    // 判斷是否需要進行間距擴展
-    if (currentLen >= targetLen) {
-        return text; // 長度足夠或超過目標，直接回傳原始文字
-    }
-
-    // 計算需要補足多少個「字元單位」的長度 (即字元差)
-    const neededCharUnits = targetLen - currentLen;
-    // 計算總共需要的額外像素空間 (字元差 * 每個字元的視覺單位)
-    const totalExtraSpaceNeededPx = neededCharUnits * VISUAL_CHAR_UNIT_PX;
-    
-    const numGaps = currentLen - 1; // 間隙數量 = 字數 - 1 (n個字有n-1個間隙)
-
-    let finalSpan = text;
-
-    if (numGaps > 0) {
-        // 將總額外空間平均分配到每個間隙中
-        const extraSpacingPerGap = totalExtraSpaceNeededPx / numGaps;
-        // 新的 letter-spacing = 基礎間距 (10px) + 每個間隙的額外間距
-        const totalSpacing = BASE_LETTER_SPACING_PX + extraSpacingPerGap;
-        
-        // 將文字包裝在 span 內，並應用計算出的 letter-spacing
-        finalSpan = `<span style="letter-spacing:${totalSpacing.toFixed(2)}px;">${text}</span>`;
-    } else if (currentLen === 1) {
-        // 如果只有一個字，無法調整間距 (numGaps=0)，改為用全形空白補足長度
-        finalSpan = text + '　'.repeat(neededCharUnits); 
-    }
-    
-    return finalSpan;
-}
-
-
-/**
- * 異步獲取試算表資料，並更新 UI 狀態
- */
-async function fetchSheetData(){
-    const selectElement = document.getElementById('filterValueSelect');
-    // 顯示載入狀態
-    selectElement.innerHTML = '<option>載入中...</option>';
-    selectElement.disabled = true;
-    resultsContainer.innerHTML = '<p>資料載入中，請稍候...</p>';
-    hideMessage();
-    try {
-        // 使用 fetch 發送 HTTP 請求獲取 JSON 資料
-        const res = await fetch(GS_SCRIPT_URL);
-        const data = await res.json();
-        globalSheetData = data; // 儲存全域資料
-        displayMessage('資料載入成功');
-        return data;
-    } catch (e) {
-        console.error('Fetch error:', e);
-        displayMessage('資料載入失敗',true);
-        return null;
-    }
-}
-
-/**
- * 根據選定的欄位填充篩選值下拉選單
- * @param {Array<Object>} data 試算表資料
- * @param {string} fieldKey 欄位名稱
- */
-function populateFilterValues(data, fieldKey){
-    const selectElement = document.getElementById('filterValueSelect');
-    selectElement.innerHTML = '';
-    
-    if (!data || data.length === 0){
-        selectElement.disabled=true;
-        return;
-    }
-
-    // 使用 Set 確保篩選值不重複
-    const uniqueValues = new Set();
-    data.forEach(row=>{
-        const val = row[fieldKey];
-        if(val) uniqueValues.add(val.toString().trim());
-    });
-    
-    // 按中文排序 (使用 localeCompare 搭配 'zh-TW' 參數確保正確的中文排序)
-    const sorted = Array.from(uniqueValues).sort((a,b)=>a.localeCompare(b,'zh-TW'));
-
-    // 增加預設選項
-    const def = document.createElement('option');
-    def.value=''; def.textContent='--- 請選擇 ---';
-    selectElement.appendChild(def);
-
-    // 填充所有唯一值到下拉選單
-    sorted.forEach(v=>{
-        const o=document.createElement('option');
-        o.value=v; o.textContent=v;
-        selectElement.appendChild(o);
-    });
-
-    selectElement.disabled=false; // 載入完成後啟用下拉選單
-}
-
-// 頁面載入後初始化
-document.addEventListener('DOMContentLoaded', async()=>{
-    const initializeData = async () => {
-        // 如果資料未載入，則從遠端獲取
-        if(!globalSheetData) await fetchSheetData();
-        // 預設填充「班期」的篩選值
-        if (globalSheetData) {
-            populateFilterValues(globalSheetData, fieldMap["班期"]);
-        }
-    };
-
-    await initializeData();
-    
-    // 監聽篩選欄位變更，當使用者切換欄位時，重新填充對應的篩選值
-    document.getElementById('filterField').addEventListener('change', (event)=>{ 
-        populateFilterValues(globalSheetData, fieldMap[event.target.value]);
-    });
-});
-
-/**
- * 執行篩選並生成圖片預覽
- */
-function applyFilter(){
-    const fieldSelect=document.getElementById('filterField');
-    const valueSelect=document.getElementById('filterValueSelect');
-    const filterKey=fieldMap[fieldSelect.value]; // 取得實際的資料欄位名稱 (例如 "班期")
-    const filterValue=valueSelect.value.trim().toLowerCase(); // 取得篩選值並轉小寫
-
-    // 重設狀態
-    resultsContainer.innerHTML='';
-    downloadableItems=[];
-    downloadAllBtn.disabled=true;
-    hideMessage();
-
-    if(!globalSheetData){ displayMessage('資料尚未載入',true); return; }
-    if(!filterValue){ displayMessage('請選擇篩選值',true); return; }
-
-    // 根據使用者選擇的欄位和值進行資料篩選
-    const filtered = globalSheetData.filter(row=>{
-        const v=row[filterKey];
-        // 確保值存在、轉字串、去除空白並轉小寫後與篩選值比對
-        return v && v.toString().trim().toLowerCase() === filterValue; 
-    });
-
-    // 處理無資料的情況
-    if(filtered.length===0){
-        displayMessage('找不到符合資料');
-        resultsContainer.innerHTML=`<p>無資料：${valueSelect.value}</p>`;
-        return;
-    }
-
-    displayMessage(`找到 ${filtered.length} 筆資料`);
-    downloadAllBtn.disabled=false; // 找到資料後啟用下載全部按鈕
-
-    // 遍歷所有篩選後的資料，並為每一筆生成一個預覽區塊
-    filtered.forEach((row, index)=>{
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "result-item";
-        itemDiv.id = `item-${index}`; // 給予唯一 ID 方便截圖
-
-        /* 圖片（背景圖） */
-        const img = document.createElement("img");
-        img.className = "result-img";
-        // 設置 crossorigin 屬性，允許跨域圖片被 html-to-image 處理
-        img.setAttribute('crossOrigin', 'anonymous'); 
-        
-        // 設置背景圖片 URL
-        img.src = "https://chy0205.github.io/1110/1201.png";
-        // 圖片載入失敗時的備用圖
-        img.onerror = () => { 
-            console.error('Image failed to load'); 
-            img.src = 'https://placehold.co/720x1280/eeeeee/333333?text=背景圖載入失敗'; 
-        };
-        itemDiv.appendChild(img);
-
-        /* 文字內容區塊 */
-        const contentBlock = document.createElement("div");
-        contentBlock.className = "content-block";
-
-        // ★ 標題兩行文字處理 (日期 / 仙佛與班期)，計算長度以進行垂直對齊 ★
-        
-        let dateLineText = '';
-        if(row["日期"]) {
-            // 日期行：開頭一個半形空格
-            dateLineText = `${row["日期"]}`; 
-        }
-        
-        let deityCourseLineText = '';
-        if(row["仙佛"] || row["班期"]){
-            let text = ""; // 仙佛行：開頭一個全形空格，用於與日期行區隔
-            if(row["仙佛"]) text += row["仙佛"];
-            if(row["班期"]) text += `慈悲於${row["班期"]}`;
-            deityCourseLineText = text;
-        }
-
-        // 找出兩行文字中最長的視覺長度（以字數計）作為對齊的目標長度
-        const finalMaxLen = Math.max(dateLineText.length, deityCourseLineText.length);
-        // 如果最長長度小於最小目標長度 (15)，則使用最小目標長度確保基礎寬度
-        const targetLen = finalMaxLen > 1 ? finalMaxLen : ALIGN_MIN_TARGET_LEN;
-
-        // 初始化最終內容字串 
-        let finalContentString = "\n"; 
-        
-        // 1. 日期行：應用對齊函式，並加上換行符 (\n)
-        finalContentString += generateAlignedSpan(dateLineText, targetLen) + '\n';
-
-        // 2. 仙佛與班期行：應用對齊函式，並加上換行符 (\n)
-        finalContentString += generateAlignedSpan(deityCourseLineText, targetLen) + '\n';
-
-
-        const name = row["姓名"] || "";
-        const content = row["內容"] || ""; // 獲取原始內容
-        
-        // ★ 內容文字縮排邏輯：確保內容與前面的標題有固定間隔 ★
-        const FIXED_TOTAL_INDENT = 7; // 固定總縮排字元數 (從最右側列開始計算的縮排，包括姓名和分隔符號)
-        
-        // 1. 計算 namePrefix (姓名) 前需要的縮排 (indentString)
-        const nameAndSeparatorLength = name.length + 1; // 姓名長度 + 1 (分隔符號 '|')
-        // 需要在姓名之前填充的空格數
-        const requiredPrefixSpaces = Math.max(0, FIXED_TOTAL_INDENT - nameAndSeparatorLength);
-        
-        const indentString = "　".repeat(requiredPrefixSpaces); // 產生前綴的全形縮排
-        
-        // 姓名行（例如：　蔡廣生|） - 位於內容區塊第一列的前綴
-        const namePrefix = name ? `${indentString}${name}|` : "";
-
-        // 設定每行最大字數，避免超出直式高度 (1280px)
-        const maxCharsPerLine = 19; 
-        // 呼叫斷行函式，處理原始內容中的換行和長度限制
-        const wrappedContent = forceVerticalLineBreak(content, maxCharsPerLine);
-        const lines = wrappedContent.split("\n"); // 獲取所有處理後的行
-
-        // 2. 計算後續內容行的縮排字元串 (固定 8 格)
-        const totalIndent = FIXED_TOTAL_INDENT;
-        const contentIndentString = "　".repeat(totalIndent);
-
-        let formatted = "";
-        lines.forEach((line, i)=>{
-            if(i===0) {
-                // 內容的第一行直接接在 namePrefix 後面 (在同一列)
-                formatted += line; 
-            }
-            else {
-                // 第二行及以後的內容需要換行 (\n) (換到下一列) 
-                // 並加入標準的內容縮排 (8 格) (從頂部垂直方向的縮排)
-                formatted += '\n' + contentIndentString + line;
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            fetchTeamsData();
+            updateDateDisplay();
         });
 
-        // 將標頭、姓名和主要內容組合成完整的 HTML 字串
-        let finalHTML = finalContentString + namePrefix + formatted;
+        function initApp() {
+            const savedUser = localStorage.getItem('sh_user_secure');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            } else { switchView('login'); }
+        }
 
-        /* 區域文字處理 (位於內容結尾) */
-        if(row["區域"]){
-            // 取得實際內容的最後一行，用於判斷是否還有空間容納區域文字
-            const lastContentLine = lines[lines.length - 1] || '';
-            const lastLineLength = lastContentLine.length; 
-            
-            const maxCharsForSameLine = 15; // 臨界值：最後一行字數超過 15 則換列 (預留空間)
+        function showDashboard() {
+            document.getElementById('main-nav').classList.remove('hidden');
+            document.getElementById('user-display').classList.remove('hidden');
+            document.getElementById('display-name').innerText = `${currentUser.group} - ${currentUser.name}`;
+            switchView('attendance');
+            checkAttendance();
+        }
 
-            let prefix = ''; 
+        // --- 核心邏輯：註冊 ---
+        async function handleRegister() {
+            const group = document.getElementById('reg-group').value;
+            const name = document.getElementById('reg-name').value;
+            const pass = document.getElementById('reg-pass').value;
+            const confirm = document.getElementById('reg-pass-confirm').value;
+
+            if (!group || !name || !pass) return toast('請填寫完整資訊', true);
+            if (pass.length < 6) return toast('密碼至少需要 6 位', true);
+            if (pass !== confirm) return toast('密碼確認不一致', true);
+
+            const btn = document.getElementById('reg-btn');
+            btn.disabled = true;
+            btn.innerText = '處理中...';
+
+            try {
+                const params = new URLSearchParams({ action: 'register', group, name, password: pass });
+                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
+                const result = await res.json();
+                
+                if (result.success || result.status === 'success') {
+                    toast('註冊並設定密碼成功！');
+                    switchView('login');
+                } else {
+                    toast(result.error || '註冊失敗', true);
+                }
+            } catch (e) { toast('網路錯誤', true); }
+            btn.disabled = false;
+            btn.innerText = '確認註冊並鎖定密碼';
+        }
+
+        // --- 核心邏輯：登入 ---
+        async function handleLogin() {
+            const group = document.getElementById('login-group').value;
+            const name = document.getElementById('login-name').value;
+            const password = document.getElementById('login-pass').value;
+            if (!group || !name || !password) return toast('請輸入組別、姓名與密碼', true);
             
-            // 1. 如果最後一行字數 > 15 (空間不足，需要換到下一列/新行)
-            if (lastLineLength > maxCharsForSameLine) {
-                // 換行 (\n)，並加入標準的內容縮排 (8 格)
-                prefix = '\n' + contentIndentString; 
-            } 
-            // 2. 如果最後一行字數 <= 15 (空間足夠，接在同一列/行後面)
-            else {
-                // 在同一列/行接續，只需要一個全形空格來分隔內容和區域
-                prefix = ''; 
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true;
+            btn.innerText = '驗證中...';
+            try {
+                const params = new URLSearchParams({ action: 'login', group, name, password });
+                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
+                const result = await res.json();
+                if (result.success || result.status === 'success') {
+                    currentUser = { group, name };
+                    localStorage.setItem('sh_user_secure', JSON.stringify(currentUser));
+                    showDashboard();
+                    toast('登入成功');
+                } else { toast(result.error || '密碼錯誤或尚未註冊', true); }
+            } catch (e) { toast('連線失敗', true); }
+            btn.disabled = false;
+            btn.innerText = '進入系統';
+        }
+
+        // --- 核心邏輯：簽到 ---
+        async function checkAttendance() {
+            const statusDiv = document.getElementById('attendance-status');
+            const btn = document.getElementById('signin-btn');
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL}?action=checkAttendance&group=${encodeURIComponent(currentUser.group)}&name=${encodeURIComponent(currentUser.name)}`);
+                const result = await res.json();
+                if (result.signedIn) {
+                    statusDiv.innerHTML = `<p class="text-emerald-600 font-bold">✅ 今日已完成簽到<br><span class="text-xs text-slate-400 font-normal">簽到時間：${result.time}</span></p>`;
+                    btn.classList.add('hidden');
+                } else {
+                    statusDiv.innerHTML = `<p class="text-slate-400">尚未完成今日簽到</p>`;
+                    btn.classList.remove('hidden');
+                }
+            } catch (e) { statusDiv.innerHTML = `<p class="text-red-400 text-sm">檢查簽到狀態失敗</p>`; }
+        }
+
+        async function performSignIn() {
+            const btn = document.getElementById('signin-btn');
+            btn.disabled = true;
+            try {
+                const params = new URLSearchParams({ action: 'signIn', group: currentUser.group, name: currentUser.name });
+                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
+                const result = await res.json();
+                if (result.success || result.status === 'success') {
+                    toast('簽到成功');
+                    checkAttendance();
+                } else { toast(result.error || '簽到失敗', true); btn.disabled = false; }
+            } catch (e) { toast('連線失敗', true); btn.disabled = false; }
+        }
+
+        // --- 其他輔助函式 ---
+        function switchView(viewName) {
+            document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden-view'));
+            const target = document.getElementById(`view-${viewName}`);
+            if (target) target.classList.remove('hidden-view');
+            
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            if (viewName === 'attendance') navItems[0]?.classList.add('active');
+            if (viewName === 'quiz') navItems[1]?.classList.add('active');
+            if (viewName === 'results') navItems[2]?.classList.add('active');
+            
+            if (viewName === 'results') loadHistoryData();
+            if (viewName === 'attendance' && currentUser) checkAttendance();
+        }
+
+        async function fetchTeamsData() {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${TEAMS_GID}`;
+                const res = await fetch(url);
+                const data = JSON.parse((await res.text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]);
+                teamsData = {};
+                data.table.rows.forEach(row => {
+                    const g = row.c[0]?.v; const n = row.c[1]?.v;
+                    if (g && n && g !== '組別') { if (!teamsData[g]) teamsData[g] = []; teamsData[g].push(n); }
+                });
+                [document.getElementById('login-group'), document.getElementById('reg-group')].forEach(select => {
+                    select.innerHTML = '<option value="" disabled selected>請選擇組別</option>';
+                    Object.keys(teamsData).forEach(g => { const opt = document.createElement('option'); opt.value = opt.text = g; select.appendChild(opt); });
+                    select.onchange = (e) => {
+                        const ns = e.target.id === 'login-group' ? document.getElementById('login-name') : document.getElementById('reg-name');
+                        ns.innerHTML = '<option value="" disabled selected>選擇姓名</option>';
+                        teamsData[e.target.value].forEach(n => { const opt = document.createElement('option'); opt.value = opt.text = n; ns.appendChild(opt); });
+                        ns.disabled = false;
+                    };
+                });
+            } catch (e) { console.error('名單獲取失敗', e); }
+        }
+
+        async function loadHistoryData() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '<div class="text-center py-10 text-slate-400">載入中...</div>';
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&name=${encodeURIComponent(currentUser.name)}&group=${encodeURIComponent(currentUser.group)}`);
+                const result = await res.json();
+                if ((result.success || result.status === 'success') && result.data && result.data.length > 0) {
+                    historyData = result.data;
+                    list.innerHTML = result.data.map((r, index) => `
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center cursor-pointer hover:border-emerald-300 transition-all fade-in" onclick="showExamDetail(${index})">
+                            <div>
+                                <div class="text-xs text-slate-400">${r.timestamp}</div>
+                                <div class="font-bold text-slate-700">${r.quizType}</div>
+                                <div class="text-[10px] text-emerald-600 mt-1 font-bold">點擊查看詳解 →</div>
+                            </div>
+                            <div class="text-3xl font-black text-emerald-500">${r.score}</div>
+                        </div>
+                    `).join('');
+                } else list.innerHTML = '<div class="text-center py-10 text-slate-400 bg-white rounded-xl">尚無考試紀錄</div>';
+            } catch (e) { list.innerHTML = '<div class="text-center py-10 text-red-400">載入成績紀錄失敗</div>'; }
+        }
+
+        // --- 修正：處理詳解中的 JSON 解析錯誤與圖片顯示 ---
+        function showExamDetail(index) {
+            const record = historyData[index];
+            if (!record) return;
+
+            let details = [];
+            try {
+                // 檢查 details 是否存在且有效
+                if (!record.details || record.details === "undefined") {
+                    throw new Error("Missing detail data");
+                }
+                details = JSON.parse(record.details);
+            } catch (e) {
+                console.error("解析成績詳解失敗:", e);
+                toast('此筆紀錄無詳細題目資料（可能是舊版考卷）', true);
+                return;
             }
 
-            // 將區域內容用 span 包裹並應用 .small-text 類別 (較小的字體)
-            const areaHtml = `<span class="small-text">（${row["區域"]}）</span>`;
-
-            // 將區域文字附加到內容的尾部
-            finalHTML += `${prefix}${areaHtml}`; 
+            const body = document.getElementById('detail-body');
+            document.getElementById('detail-title').innerText = `${record.quizType} (${record.score}分)`;
+            
+            body.innerHTML = details.map((d, i) => {
+                // 檢查是否有圖片 (支援 imageUrl 欄位)
+                const imgHtml = (d.imageUrl || d.img) ? `<div class="mb-3"><img src="${d.imageUrl || d.img}" class="max-w-full h-auto rounded-lg mx-auto shadow-sm" onerror="this.style.display='none'"></div>` : '';
+                
+                return `
+                <div class="p-4 rounded-xl border ${d.isCorrect ? 'border-emerald-100 bg-emerald-50/50' : 'border-red-100 bg-red-50/50'}">
+                    <div class="font-bold mb-2 text-slate-800">${i+1}. ${d.question || d.title || '題目載入中'} ${d.isCorrect ? '✅' : '❌'}</div>
+                    ${imgHtml}
+                    <div class="text-sm space-y-1">
+                        <p><span class="text-slate-400">您的答案：</span><span class="${d.isCorrect ? 'text-emerald-600' : 'text-red-600'} font-medium">${d.userAnswer}</span></p>
+                        ${!d.isCorrect ? `<p><span class="text-slate-400">正確答案：</span><span class="text-emerald-600 font-medium">${Array.isArray(d.correctAnswer || d.answer) ? (d.correctAnswer || d.answer).join(', ') : (d.correctAnswer || d.answer)}</span></p>` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+            document.getElementById('detail-modal').style.display = 'flex';
         }
 
-        // 將組裝好的 HTML 內容設置到內容區塊
-        contentBlock.innerHTML = finalHTML;
-        itemDiv.appendChild(contentBlock);
+        function startQuizFlow() {
+            const type = document.getElementById('quiz-type-select').value;
+            if (!type) return toast('請選擇科目', true);
+            document.getElementById('quiz-init').classList.add('hidden');
+            document.getElementById('quiz-main').classList.remove('hidden');
+            document.getElementById('quiz-content').innerHTML = '<p class="text-center py-10">考卷載入中...</p>';
+            fetchSheetQuiz(type).then(data => { quizData = data; renderQuiz(); }).catch(() => toast('載入考卷失敗', true));
+        }
 
-        /* 單一下載按鈕 */
-        const btnWrapper = document.createElement("div");
-        btnWrapper.className="download-button-wrapper";
-        const btn=document.createElement("button");
-        btn.className="btn-style";
-        btn.textContent="下載 PNG";
+        async function fetchSheetQuiz(type) {
+            const [q1, q2] = await Promise.all([
+                fetchSingleSheet(QUIZ_GIDS['隨堂']),
+                fetchSingleSheet(QUIZ_GIDS[type])
+            ]);
+            return [...q1, ...q2];
+        }
 
-        const filename=`${row["姓名"]||"未知"}-${row["區域"]||"未知"}`;
-        // 設定單個按鈕的點擊事件，呼叫 generateImage 函式
-        btn.onclick=()=>generateImage(itemDiv, filename);
+        async function fetchSingleSheet(gid) {
+            const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`);
+            const text = await res.text();
+            const data = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]);
+            return data.table.rows.map(row => ({
+                question: row.c[0]?.v, 
+                type: row.c[1]?.v?.toLowerCase().trim(),
+                options: row.c[2]?.v ? String(row.c[2].v).split(',').map(s => s.trim()) : [],
+                answer: String(row.c[3]?.v || '').split(',').map(s => s.trim()),
+                score: parseFloat(row.c[4]?.v || 0), 
+                imageUrl: row.c[5]?.v || '' // F 欄是圖片
+            })).filter(q => q.question);
+        }
 
-        btnWrapper.appendChild(btn);
-        itemDiv.appendChild(btnWrapper);
-
-        resultsContainer.appendChild(itemDiv);
-        // 儲存待下載項目資訊，供下載全部功能使用
-        downloadableItems.push({element:itemDiv, filename});
-    });
-}
-
-/**
- * 截圖並下載單個圖片 (用於單一按鈕)
- * @param {HTMLElement} element 要截圖的 DOM 元素
- * @param {string} filename 儲存檔名
- * @param {function():void} callback 下載完成後的回調函數
- */
-async function generateImage(element, filename, callback=()=>{}){
-    // 截圖前暫時隱藏下載按鈕，避免按鈕出現在圖片中
-    const hideBtn = element.querySelector('.download-button-wrapper');
-    if(hideBtn) hideBtn.style.display='none';
-
-    try {
-        // 使用 htmlToImage.toPng 將 DOM 元素轉換為 PNG 圖片的 Base64 URL
-        const dataUrl = await htmlToImage.toPng(element);
-        // 建立一個隱藏的 <a> 標籤來觸發下載
-        const a=document.createElement('a');
-        a.href=dataUrl;
-        a.download=filename + ".png";
-        document.body.appendChild(a);
-        a.click(); // 觸發下載
-        document.body.removeChild(a);
-        callback();
-    } catch(e){
-        console.error("生成圖片失敗:", e);
-        displayMessage(`生成圖片失敗: ${e.message}`, true); 
-        callback();
-    } finally {
-        // 截圖後恢復顯示下載按鈕
-        if(hideBtn) hideBtn.style.display='block';
-    }
-}
-
-/**
- * 下載所有生成的圖片，並將其打包成 ZIP 檔案
- */
-async function downloadAllImages(){
-    if(downloadableItems.length===0) return;
-
-    downloadAllBtn.disabled=true;
-    displayMessage("開始打包 ZIP 檔案，請稍候...");
-
-    // 1. 初始化 JSZip
-    const zip = new JSZip();
-    const folder = zip.folder("generated_images"); // 在 ZIP 內建立一個資料夾
-    // 簡單的延遲函式，避免瀏覽器在短時間內處理大量 DOM-to-Image 任務而卡住
-    const delay = ms => new Promise(r=>setTimeout(r, ms));
-
-    try {
-        // 2. 依序生成圖片 Blob 並加入 ZIP 檔案
-        for(let i=0;i<downloadableItems.length;i++){
-            const item = downloadableItems[i];
-            // 截圖前暫時隱藏下載按鈕
-            const hideBtn = item.element.querySelector('.download-button-wrapper');
-            if(hideBtn) hideBtn.style.display='none';
-
-            displayMessage(`處理中：${item.filename}.png (${i+1}/${downloadableItems.length})`);
+        function renderQuiz() {
+            const quizSubject = document.getElementById('quiz-type-select').value;
+            let html = `<div class="bg-emerald-50 p-4 rounded-xl mb-4 text-emerald-800 text-sm font-bold text-center shadow-inner">正在測驗：隨堂 + ${quizSubject}</div>`;
             
-            // 使用 htmlToImage.toBlob 取得圖片的 Blob 資料
-            const imageBlob = await htmlToImage.toBlob(item.element, {
-                quality: 0.95 // 設置圖片品質，95%
+            quizData.forEach((q, i) => {
+                const qId = `q${i+1}`;
+                let optHtml = '';
+                
+                // 修正：處理圖片顯示
+                const imgHtml = q.imageUrl ? `<div class="mb-4 text-center"><img src="${q.imageUrl}" class="max-w-full h-auto rounded-xl mx-auto shadow-sm border border-slate-100" onerror="this.style.display='none'"></div>` : '';
+
+                if(q.type !== 'fill') {
+                    const shuffled = [...q.options].sort(()=>Math.random()-0.5);
+                    optHtml = shuffled.map(o => `
+                        <label class="hover:bg-slate-50 transition-colors">
+                            <input type="${q.type==='single'?'radio':'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                            <span class="text-slate-700">${o}</span>
+                        </label>
+                    `).join('');
+                } else {
+                    optHtml = `<input type="text" class="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm" data-qid="${qId}" placeholder="請在此輸入答案">`;
+                }
+
+                html += `
+                    <div class="question-card p-6 rounded-xl shadow-sm mb-6 bg-white border border-slate-100" id="${qId}">
+                        <h3 class="font-bold mb-4 text-slate-800 text-lg leading-relaxed">${i+1}. ${q.question}</h3>
+                        ${imgHtml}
+                        <div class="options space-y-2">${optHtml}</div>
+                    </div>
+                `;
             });
-
-            // 將 Blob 資料加入 ZIP 檔案，使用檔案名稱作為鍵
-            folder.file(`${item.filename}.png`, imageBlob);
-
-            // 截圖後恢復顯示下載按鈕
-            if(hideBtn) hideBtn.style.display='block';
-            
-            // 暫停 500ms，給予瀏覽器緩衝和渲染時間
-            await delay(500); 
+            html += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-xl font-bold text-lg mb-10 shadow-lg">確認交卷</button>`;
+            document.getElementById('quiz-content').innerHTML = html;
+            window.scrollTo(0,0);
         }
 
-        // 3. 生成 ZIP 檔案 (Blob)
-        displayMessage("正在壓縮檔案...");
-        // 壓縮選項：type: "blob" 生成二進位大對象
-        const zipBlob = await zip.generateAsync({type: "blob"});
+        async function handleQuizSubmit() {
+            const btn = document.getElementById('quiz-final-btn'); 
+            btn.disabled = true;
+            btn.innerText = '正在處理並儲存成績...';
+            const answers = quizData.map((q, i) => {
+                const el = document.getElementById(`q${i+1}`);
+                let val = '未作答';
+                if (q.type === 'single') {
+                    const checked = el.querySelector('input:checked');
+                    val = checked ? checked.value : '未作答';
+                } else if (q.type === 'multiple') {
+                    val = Array.from(el.querySelectorAll('input:checked')).map(i => i.value).sort().join(', ') || '未作答';
+                } else {
+                    val = el.querySelector('input')?.value.trim() || '未作答';
+                }
+                return { qId: `q${i+1}`, userAnswer: val };
+            });
+            try {
+                const params = new URLSearchParams({ 
+                    action: 'submitQuiz', 
+                    group: currentUser.group, 
+                    name: currentUser.name, 
+                    quizType: document.getElementById('quiz-type-select').value, 
+                    userAnswersJson: JSON.stringify(answers), 
+                    quizDataJson: JSON.stringify(quizData) 
+                });
+                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
+                const result = await res.json();
+                if (result.success || result.status === 'success') {
+                    toast('考卷提交成功，成績已存檔');
+                    switchView('results');
+                }
+            } catch (e) { toast('提交失敗，請檢查網路連線', true); btn.disabled = false; btn.innerText = '確認交卷'; }
+        }
 
-        // 4. 使用 FileSaver.js 觸發下載
-        saveAs(zipBlob, "試算表圖檔輸出.zip");
-
-        displayMessage("ZIP 檔案下載完成！");
-    } catch(e) {
-        console.error("生成 ZIP 失敗:", e);
-        displayMessage(`生成 ZIP 失敗: ${e.message}`, true);
-    } finally {
-        // 無論成功或失敗，最後都要啟用按鈕
-        downloadAllBtn.disabled=false;
-    }
-}
-</script>
+        function closeDetailModal() { document.getElementById('detail-modal').style.display = 'none'; }
+        function logout() { localStorage.removeItem('sh_user_secure'); location.reload(); }
+        function updateDateDisplay() { document.getElementById('today-date').innerText = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }); }
+        function toast(msg, isError = false) { const box = document.getElementById('message-box'); box.innerText = msg; box.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[1000] fade-in font-bold ${isError ? 'bg-red-500' : 'bg-emerald-500'}`; box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 4000); }
+    </script>
 </body>
 </html>
-
-
