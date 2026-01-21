@@ -84,7 +84,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
-            z-index: 200;
+            z-index: 2000; 
             display: none;
             align-items: center;
             justify-content: center;
@@ -94,10 +94,11 @@
             background: white;
             width: 100%;
             max-width: 600px;
-            max-height: 80vh;
+            max-height: 85vh;
             border-radius: 20px;
             overflow-y: auto;
             padding: 24px;
+            position: relative;
         }
 
         .role-badge {
@@ -113,10 +114,11 @@
         .role-user { background-color: #64748b; color: white; }
 
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .dot-signed { background-color: #10b981; box-shadow: 0 0 5px #10b981; } 
-        .dot-missing { background-color: #ef4444; box-shadow: 0 0 5px #ef4444; } 
-        .dot-leave { background-color: #f59e0b; box-shadow: 0 0 5px #f59e0b; }   
-        .dot-official { background-color: #3b82f6; box-shadow: 0 0 5px #3b82f6; }
+        .dot-signed { background-color: #10b981; box-shadow: 0 0 5px #10b981; }   /* 出席 - 綠色 */
+        .dot-missing { background-color: #ef4444; box-shadow: 0 0 5px #ef4444; }  /* 未簽 - 紅色 */
+        .dot-leave { background-color: #f59e0b; box-shadow: 0 0 5px #f59e0b; }    /* 事/病假 - 橘色 */
+        .dot-official { background-color: #3b82f6; box-shadow: 0 0 5px #3b82f6; } /* 公假 - 藍色 */
+        .dot-late { background-color: #fbbf24; box-shadow: 0 0 5px #fbbf24; }     /* 晚到 - 黃色 */
     </style>
 </head>
 <body>
@@ -178,6 +180,7 @@
             </div>
         </div>
 
+        <!-- 個人簽到視圖 -->
         <div id="view-attendance" class="hidden-view fade-in py-6">
             <div class="glass-card rounded-2xl p-8 text-center">
                 <h2 class="text-xl font-bold mb-2">每日簽到</h2>
@@ -189,6 +192,7 @@
             </div>
         </div>
 
+        <!-- 測驗視圖 -->
         <div id="view-quiz" class="hidden-view fade-in">
             <div id="quiz-init" class="glass-card rounded-2xl p-6 text-center">
                 <h2 class="text-xl font-bold mb-4">參加測驗</h2>
@@ -207,11 +211,11 @@
             <div id="history-list" class="space-y-4"></div>
         </div>
 
-        <!-- 管理中心視圖 -->
+        <!-- 管理中心視圖 (調整/代簽入口) -->
         <div id="view-admin" class="hidden-view fade-in py-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-emerald-800">管理中心</h2>
-                <button onclick="loadAdminDashboard()" class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">刷新資料</button>
+                <button onclick="loadAdminDashboard()" class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold font-mono">REFRESH</button>
             </div>
 
             <!-- 篩選器面板 -->
@@ -233,13 +237,12 @@
                 <div class="text-center py-10 text-slate-400">正在準備統計資料...</div>
             </div>
 
-            <!-- 測驗時間管理 (僅限 Admin/Teacher) -->
+            <!-- 測驗時間管理 -->
             <div id="quiz-config-container" class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-emerald-500 hidden">
                 <h3 class="font-bold text-slate-800 mb-2 flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     統一測驗開放時間 (台北時間)
                 </h3>
-                
                 <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <label class="text-xs font-bold text-slate-400 mb-2 block">測驗快速開關：</label>
                     <button id="master-quiz-toggle" onclick="toggleMasterQuizStatus()" class="w-full py-3 rounded-xl font-bold transition-all shadow-sm flex justify-center items-center gap-2 text-white">
@@ -248,7 +251,6 @@
                     </button>
                     <p class="text-[10px] text-slate-400 mt-2 text-center">※ 開放後自動設定 2 小時時效；關閉則立即失效。</p>
                 </div>
-
                 <div class="space-y-4">
                     <label class="text-xs font-bold text-slate-400 px-1">手動精確設定：</label>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -270,40 +272,53 @@
 
     </main>
 
-    <!-- 詳解彈窗 -->
+    <!-- 各種彈窗 -->
     <div id="detail-modal" class="modal" onclick="closeDetailModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
                 <h3 id="detail-title" class="text-xl font-bold">資訊詳解</h3>
-                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600">✕ 關閉</button>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 p-2 text-xl transition-transform active:scale-90">✕</button>
             </div>
             <div id="detail-body" class="space-y-6"></div>
         </div>
     </div>
 
-    <!-- 代簽彈窗 -->
+    <!-- 代簽/調整彈窗 -->
     <div id="proxy-sign-modal" class="modal" onclick="closeProxyModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 class="text-xl font-bold">學員代簽/備註</h3>
-                <button onclick="closeProxyModal()" class="text-slate-400 hover:text-slate-600">✕ 關閉</button>
+                <h3 class="text-xl font-bold">狀態代簽/調整</h3>
+                <button onclick="closeProxyModal()" class="text-slate-400 hover:text-slate-600 p-2 text-xl transition-transform active:scale-95">✕</button>
             </div>
             <div class="space-y-4">
-                <p class="text-sm text-slate-500">正在為 <span id="proxy-target-name" class="font-bold text-emerald-600"></span> 簽到</p>
+                <p class="text-sm text-slate-500 font-medium">正在幫 <span id="proxy-target-name" class="font-bold text-emerald-600"></span> 進行狀態調整</p>
+                
                 <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">出勤狀態快速選擇：</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="setProxyNote('正常出席')" class="px-3 py-1 border rounded-full text-sm hover:bg-emerald-50 text-emerald-600 border-emerald-100">正常出席</button>
-                        <button onclick="setProxyNote('公假')" class="px-3 py-1 border rounded-full text-sm hover:bg-blue-50 text-blue-600 border-blue-100">公假</button>
-                        <button onclick="setProxyNote('事假')" class="px-3 py-1 border rounded-full text-sm hover:bg-orange-50 text-orange-600 border-orange-100">事假</button>
-                        <button onclick="setProxyNote('病假')" class="px-3 py-1 border rounded-full text-sm hover:bg-orange-50 text-orange-600 border-orange-100">病假</button>
-                    </div>
+                    <label class="text-xs font-bold text-slate-400 mb-2 block">1. 選擇假別/狀態：</label>
+                    <select id="proxy-leave-type" class="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-bold">
+                        <option value="正常出席">正常出席</option>
+                        <option value="晚到">晚到</option>
+                        <option value="公假">公假</option>
+                        <option value="事假">事假</option>
+                        <option value="病假">病假</option>
+                        <option value="其他">其他</option>
+                    </select>
                 </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setProxyQuick('正常出席')" class="px-3 py-1 border rounded-full text-xs hover:bg-emerald-50 text-emerald-600 border-emerald-100">正常出席</button>
+                    <button onclick="setProxyQuick('晚到')" class="px-3 py-1 border rounded-full text-xs hover:bg-yellow-50 text-yellow-600 border-yellow-100">晚到</button>
+                    <button onclick="setProxyQuick('公假')" class="px-3 py-1 border rounded-full text-xs hover:bg-blue-50 text-blue-600 border-blue-100">公假</button>
+                    <button onclick="setProxyQuick('事假')" class="px-3 py-1 border rounded-full text-xs hover:bg-orange-50 text-orange-600 border-orange-100">事假</button>
+                    <button onclick="setProxyQuick('病假')" class="px-3 py-1 border rounded-full text-xs hover:bg-orange-50 text-orange-600 border-orange-100">病假</button>
+                </div>
+
                 <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">自訂原因：</label>
-                    <textarea id="proxy-note-input" class="w-full p-3 border border-slate-200 rounded-xl h-24 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="填寫備註..."></textarea>
+                    <label class="text-xs font-bold text-slate-400 mb-2 block">2. 詳細原因/備註 (可選)：</label>
+                    <textarea id="proxy-reason-input" class="w-full p-3 border border-slate-200 rounded-xl h-24 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="填寫詳細原因，方便後台管理..."></textarea>
                 </div>
-                <button id="proxy-submit-btn" onclick="submitProxySignIn()" class="w-full py-3 btn-primary rounded-xl font-bold">送出代簽紀錄</button>
+
+                <button id="proxy-submit-btn" onclick="submitProxySignIn()" class="w-full py-4 btn-primary rounded-xl font-bold shadow-lg">確認送出紀錄</button>
             </div>
         </div>
     </div>
@@ -328,16 +343,16 @@
         </div>
     </nav>
 
-    <div id="message-box" class="fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[1000] fade-in hidden"></div>
+    <!-- 訊息提示框 -->
+    <div id="message-box" class="fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] fade-in hidden pointer-events-none"></div>
 
     <script>
         const SPREADSHEET_ID = '1u3D7u5hn7dcVGgGxmNBm233B_sz16kPuUcncvCnNr6U';
         const TEAMS_GID = '1026036029';
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrwEozxB-eEVaJF5RsooFf32QaWW36rXbtfLUoOceAvstkbnzsqq4-VA5--E69T0Z4RQ/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyG5BfmgHXamdUHhIOxIldSRfh3XUkzsOuPjJvkU2j2cbGkflZt6cXopBhLtfOCBU33Qw/exec';
         const QUIZ_GIDS = { '隨堂': '0', '論語': '1250135497', '性理': '1342680959', '道德經': '1246480043', '六祖': '1302889740' };
 
-        // 自訂組別順序清單
-        const GROUP_ORDER = ['第一組', '第二組', '第三組', '第四組', '第五組', '第六組', '第七組', '孟加拉', '德國', '印尼', '馬來', '神州', '主領班', '特助'];
+        const GROUP_ORDER = ['第一組', '第二組', '第三組', '第四組', '第五組', '第六組', '第七組', '德國', '孟加拉', '印尼', '馬來', '神州', '主領班', '特助'];
 
         let currentUser = null; 
         let teamsData = {};
@@ -353,7 +368,6 @@
             updateDateDisplay();
         });
 
-        // --- 排序輔助函式 ---
         function sortGroupsByCustomOrder(groupsArray) {
             return groupsArray.sort((a, b) => {
                 const indexA = GROUP_ORDER.indexOf(a);
@@ -385,20 +399,13 @@
             const userDisplay = document.getElementById('user-display');
             if (mainNav) mainNav.classList.remove('hidden');
             if (userDisplay) userDisplay.classList.remove('hidden');
-            
             const nameEl = document.getElementById('display-name');
             if (nameEl) nameEl.innerText = `${currentUser.group} - ${currentUser.name}`;
-            
             const roleBadge = document.getElementById('display-role');
-            if (roleBadge) {
-                roleBadge.innerText = currentUser.role || '組員';
-                roleBadge.className = 'role-badge';
-            }
-            
+            if (roleBadge) { roleBadge.innerText = currentUser.role || '組員'; roleBadge.className = 'role-badge'; }
             const navAdmin = document.getElementById('nav-admin');
             const isAdminTeacher = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser.role);
             const isLeader = ['Leader', '組長'].includes(currentUser.role);
-            
             if (isAdminTeacher) {
                 if (roleBadge) roleBadge.classList.add(currentUser.role.includes('Admin') ? 'role-admin' : 'role-teacher');
                 if (navAdmin) navAdmin.classList.remove('hidden');
@@ -421,20 +428,16 @@
             const typeSelect = document.getElementById('quiz-type-select');
             const type = typeSelect ? typeSelect.value : null;
             if (!type) return toast('請選擇測驗科目', true);
-            
             const btn = document.getElementById('start-quiz-btn');
             if (btn) { btn.disabled = true; btn.innerText = '驗證開放時間中...'; }
-
             try {
                 const resConfig = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`);
                 const config = await resConfig.json();
                 const quizConf = config['隨堂'];
                 const now = new Date();
-
                 if (quizConf && quizConf.start && quizConf.end) {
                     const startTime = parseToTaipeiDate(quizConf.start);
                     const endTime = parseToTaipeiDate(quizConf.end);
-
                     if (now < startTime) {
                         toast(`測驗尚未開放。開放時間 (台北)：${startTime.toLocaleString('zh-TW', {timeZone:'Asia/Taipei'})}`, true);
                         if (btn) { btn.disabled = false; btn.innerText = '開始載入題目'; }
@@ -446,18 +449,16 @@
                         return;
                     }
                 } else {
-                    toast('尚未設定測驗時間，請連繫老師。', true);
+                    toast('尚未設定測驗時間，請連繫老師學長。', true);
                     if (btn) { btn.disabled = false; btn.innerText = '開始載入題目'; }
                     return;
                 }
-                
                 const quizInit = document.getElementById('quiz-init');
                 const quizMain = document.getElementById('quiz-main');
                 const quizContent = document.getElementById('quiz-content');
                 if (quizInit) quizInit.classList.add('hidden');
                 if (quizMain) quizMain.classList.remove('hidden');
-                if (quizContent) quizContent.innerHTML = '<p class="text-center py-10">驗證通過，正在載入雲端考卷...</p>';
-                
+                if (quizContent) quizContent.innerHTML = '<p class="text-center py-10">驗證通過，正在載入雲端考題...</p>';
                 quizData = await fetchSheetQuiz(type);
                 renderQuiz();
             } catch (e) { 
@@ -477,26 +478,21 @@
             const toggleBtn = document.getElementById('master-quiz-toggle');
             const toggleText = document.getElementById('toggle-text');
             const toggleDot = document.getElementById('toggle-dot');
-
             try {
                 const res = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`);
                 const config = await res.json();
                 const sConf = config['隨堂'] || { start: '', end: '' };
-                
                 const toLocalInputFormat = (val) => {
                     const d = parseToTaipeiDate(val);
                     if (!d) return '';
                     const pad = (n) => n.toString().padStart(2, '0');
                     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
                 };
-
                 if (startInput) startInput.value = toLocalInputFormat(sConf.start);
                 if (endInput) endInput.value = toLocalInputFormat(sConf.end);
-
                 const now = new Date();
                 const startTime = parseToTaipeiDate(sConf.start);
                 const endTime = parseToTaipeiDate(sConf.end);
-
                 if (toggleBtn && toggleText && toggleDot) {
                     if (startTime && endTime && now >= startTime && now <= endTime) {
                         currentQuizOpenStatus = true;
@@ -511,27 +507,20 @@
                     }
                     toggleBtn.disabled = false;
                 }
-            } catch (e) {
-                console.error("載入設定錯誤", e);
-                if (toggleBtn) toggleBtn.disabled = false;
-            }
+            } catch (e) { if (toggleBtn) toggleBtn.disabled = false; }
         }
 
         async function toggleMasterQuizStatus() {
             const btn = document.getElementById('master-quiz-toggle');
             if (!btn) return;
-            btn.disabled = true;
-            btn.innerText = "正在切換狀態...";
-
+            btn.disabled = true; btn.innerText = "正在切換狀態...";
             try {
                 const now = new Date();
                 let start, end;
-
                 const formatForSheet = (d) => {
                     const pad = (n) => n.toString().padStart(2, '0');
                     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
                 };
-
                 if (currentQuizOpenStatus) {
                     const startInput = document.getElementById('unified-quiz-start');
                     start = startInput ? startInput.value.replace('T', ' ') : formatForSheet(now);
@@ -540,25 +529,17 @@
                     start = formatForSheet(now);
                     end = formatForSheet(new Date(now.getTime() + 2 * 60 * 60 * 1000));
                 }
-
                 const configObj = {};
                 Object.keys(QUIZ_GIDS).forEach(s => configObj[s] = { start, end });
-
                 const params = new URLSearchParams();
                 params.append('action', 'updateConfig');
                 params.append('config', JSON.stringify(configObj));
-
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
                 const result = await res.json();
-                
-                if (result.success || result.status === 'success') {
-                    toast(currentQuizOpenStatus ? '測驗已關閉' : '測驗已開放 2 小時！');
-                } else { throw new Error("更新失敗"); }
-            } catch (e) {
-                toast('操作失敗，請檢查網路', true);
-            } finally {
-                await loadQuizConfigs();
-            }
+                if (result.success || result.status === 'success') { toast(currentQuizOpenStatus ? '測驗已關閉' : '測驗已開放 2 小時！'); }
+                else { throw new Error("更新失敗"); }
+            } catch (e) { toast('操作失敗，請檢查網路', true); }
+            finally { await loadQuizConfigs(); }
         }
 
         async function saveUnifiedQuizSettings() {
@@ -569,8 +550,7 @@
             const start = startInput.value.replace('T', ' ');
             const end = endInput.value.replace('T', ' ');
             if (!start || !end) return toast('請填寫完整時間', true);
-            btn.disabled = true;
-            btn.innerHTML = '<span class="animate-pulse">儲存中...</span>';
+            btn.disabled = true; btn.innerHTML = '<span class="animate-pulse">儲存中...</span>';
             const configObj = {};
             Object.keys(QUIZ_GIDS).forEach(s => configObj[s] = { start, end });
             try {
@@ -585,11 +565,10 @@
         }
 
         async function loadAttendanceReport() {
-            const list = document.getElementById('attendance-report-list');
-            if (!list) return;
+            const list = document.getElementById('attendance-report-list'); if (!list) return;
             const filterContainer = document.getElementById('admin-group-filter-container');
             const filterSelect = document.getElementById('admin-group-filter');
-            list.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold">同步紀錄中...</div>';
+            list.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold font-mono">SYNCING...</div>';
             try {
                 const res = await fetch(`${APPS_SCRIPT_URL}?action=getAttendanceReport&role=${encodeURIComponent(currentUser.role)}&group=${encodeURIComponent(currentUser.group)}`);
                 const result = await res.json();
@@ -598,13 +577,8 @@
                 if (isAdminTeacher && filterSelect && filterSelect.options.length <= 0) {
                     if (filterContainer) filterContainer.classList.remove('hidden');
                     filterSelect.innerHTML = '<option value="ALL">全部組別</option>';
-                    
-                    // 修正：使用自訂排序邏輯排列組別
                     const sortedGroupNames = sortGroupsByCustomOrder(Object.keys(teamsData));
-                    sortedGroupNames.forEach(g => {
-                        const opt = document.createElement('option');
-                        opt.value = opt.text = g; filterSelect.appendChild(opt);
-                    });
+                    sortedGroupNames.forEach(g => { const opt = document.createElement('option'); opt.value = opt.text = g; filterSelect.appendChild(opt); });
                     filterSelect.onchange = applyFilters;
                 }
                 applyFilters();
@@ -617,20 +591,17 @@
             renderReport(cachedSignedUsers, groupVal);
         }
 
+        // --- UI 燈號與狀態排列邏輯 (修正：永遠顯示按鈕，支援調整) ---
         function renderReport(signedUsers, filterGroup) {
-            const list = document.getElementById('attendance-report-list');
-            if (!list) return;
+            const list = document.getElementById('attendance-report-list'); if (!list) return;
             const statusFilterEl = document.getElementById('admin-status-filter');
             const statusFilter = statusFilterEl ? statusFilterEl.value : 'ALL';
             let html = '';
-            
-            // 修正：使用自訂排序邏輯
             let targetGroups = filterGroup === 'ALL' ? sortGroupsByCustomOrder(Object.keys(teamsData)) : [filterGroup];
             
             targetGroups.forEach(gName => {
                 const members = teamsData[gName] || [];
-                let groupHtml = '';
-                let matchCount = 0;
+                let groupHtml = '', matchCount = 0;
                 members.forEach(mName => {
                     const signInfo = signedUsers.find(s => s.group.trim() === gName.trim() && s.name.trim() === mName.trim());
                     let isSigned = !!signInfo, isAbsent = true;
@@ -640,39 +611,57 @@
                     }
                     if (statusFilter === 'ABSENT' && !isAbsent) return;
                     matchCount++;
-                    let dotClass = 'dot-missing', statusText = '未簽到', textColorClass = 'text-red-400';
+
+                    let dotClass = 'dot-missing', textColorClass = 'text-red-400';
+                    let rightSideDisplay = '未簽到';
+                    let reasonDisplay = '';
+
                     if (isSigned) {
-                        const note = signInfo.note || '';
-                        if (note.includes('病假') || note.includes('事假')) {
-                            dotClass = 'dot-leave'; statusText = `缺席 (${note})`; textColorClass = 'text-orange-500';
-                        } else if (note.includes('公假')) {
-                            dotClass = 'dot-official'; statusText = `公假 (${signInfo.time})`; textColorClass = 'text-blue-500';
+                        const noteText = signInfo.note || "";
+                        const parts = noteText.split(' ');
+                        const leaveType = parts[0] || '正常出席';
+                        const reason = parts.slice(1).join(' ');
+
+                        if (leaveType.includes('病假') || leaveType.includes('事假')) {
+                            dotClass = 'dot-leave'; textColorClass = 'text-orange-500';
+                            rightSideDisplay = leaveType;
+                            reasonDisplay = reason;
+                        } else if (leaveType.includes('公假')) {
+                            dotClass = 'dot-official'; textColorClass = 'text-blue-500';
+                            rightSideDisplay = leaveType;
+                            reasonDisplay = reason;
+                        } else if (leaveType.includes('晚到')) {
+                            dotClass = 'dot-late'; textColorClass = 'text-yellow-600';
+                            rightSideDisplay = `晚到 (${signInfo.time})`;
+                            reasonDisplay = reason;
                         } else {
-                            dotClass = 'dot-signed'; statusText = `出席 (${signInfo.time})`; textColorClass = 'text-emerald-500';
+                            dotClass = 'dot-signed'; textColorClass = 'text-emerald-500';
+                            rightSideDisplay = `出席 (${signInfo.time})`;
+                            reasonDisplay = (reason === '自主簽到') ? '' : reason;
                         }
                     }
+                    
                     groupHtml += `
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center mb-2">
                             <div class="flex items-center">
                                 <span class="status-dot ${dotClass}"></span>
                                 <div class="flex flex-col">
-                                    <span class="font-medium text-slate-700 text-sm">${mName}</span>
-                                    ${isSigned && signInfo.note && !['自主簽到','正常出席'].includes(signInfo.note) ? `<span class="text-[10px] text-slate-400 italic">${signInfo.note}</span>` : ''}
+                                    <span class="font-bold text-slate-700 text-sm">${mName}</span>
+                                    ${reasonDisplay ? `<span class="text-[10px] text-slate-400 font-medium mt-0.5">${reasonDisplay}</span>` : ''}
                                 </div>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold ${textColorClass}">${statusText}</span>
-                                ${!isSigned ? `<button onclick="openProxyModal('${gName}', '${mName}')" class="text-[10px] px-2 py-1 bg-slate-50 text-slate-600 rounded-md border border-slate-200">代簽</button>` : ''}
+                                <span class="text-xs font-bold ${textColorClass}">${rightSideDisplay}</span>
+                                <button onclick="openProxyModal('${gName}', '${mName}')" class="text-[10px] px-2 py-1 bg-slate-50 text-slate-600 rounded-md border border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 transition-colors active:scale-95">${isSigned ? '調整' : '代簽'}</button>
                             </div>
                         </div>
                     `;
                 });
                 if (matchCount > 0) html += `<div class="mt-4 mb-2 px-2 text-xs font-bold text-slate-400 uppercase flex justify-between"><span>${gName}</span><span>${matchCount} 人</span></div>` + groupHtml;
             });
-            list.innerHTML = html || '<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border-2 border-dashed">查無名單</div>';
+            list.innerHTML = html || '<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border-2 border-dashed font-bold">目前無符合條件的名單</div>';
         }
 
-        // --- 名單獲取與基本功能 ---
         async function fetchTeamsData() {
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${TEAMS_GID}`;
@@ -683,29 +672,17 @@
                     const g = row.c[0]?.v, n = row.c[1]?.v;
                     if (g && n && g !== '組別') { if (!teamsData[g]) teamsData[g] = []; teamsData[g].push(n); }
                 });
-                
                 const gSelects = [document.getElementById('login-group'), document.getElementById('reg-group')];
-                
-                // 修正：依照自訂順序渲染下拉選單
                 const sortedGroupNames = sortGroupsByCustomOrder(Object.keys(teamsData));
-
                 gSelects.forEach(select => {
                     if (!select) return;
                     select.innerHTML = '<option value="" disabled selected>請選擇組別</option>';
-                    sortedGroupNames.forEach(g => { 
-                        const opt = document.createElement('option'); 
-                        opt.value = opt.text = g; 
-                        select.appendChild(opt); 
-                    });
+                    sortedGroupNames.forEach(g => { const opt = document.createElement('option'); opt.value = opt.text = g; select.appendChild(opt); });
                     select.onchange = (e) => {
                         const ns = e.target.id === 'login-group' ? document.getElementById('login-name') : document.getElementById('reg-name');
                         if (ns) {
                             ns.innerHTML = '<option value="" disabled selected>選擇姓名</option>';
-                            teamsData[e.target.value].sort().forEach(n => { 
-                                const opt = document.createElement('option'); 
-                                opt.value = opt.text = n; 
-                                ns.appendChild(opt); 
-                            });
+                            teamsData[e.target.value].sort().forEach(n => { const opt = document.createElement('option'); opt.value = opt.text = n; ns.appendChild(opt); });
                             ns.disabled = false;
                         }
                     };
@@ -713,76 +690,81 @@
             } catch (e) { }
         }
 
-        // --- 代簽、註冊、登入其餘邏輯 ---
+        // --- 代簽/調整邏輯 ---
         function openProxyModal(group, name) {
             proxyTarget = { group, name };
             const targetEl = document.getElementById('proxy-target-name');
             if (targetEl) targetEl.innerText = `${group} - ${name}`;
-            const noteInput = document.getElementById('proxy-note-input');
-            if (noteInput) noteInput.value = '';
+            const leaveSelect = document.getElementById('proxy-leave-type');
+            if (leaveSelect) leaveSelect.value = '正常出席';
+            const reasonInput = document.getElementById('proxy-reason-input');
+            if (reasonInput) reasonInput.value = '';
             const submitBtn = document.getElementById('proxy-submit-btn');
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '送出代簽紀錄'; }
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '確認送出紀錄'; }
             const modal = document.getElementById('proxy-sign-modal');
             if (modal) modal.style.display = 'flex';
         }
+
         function closeProxyModal() { const modal = document.getElementById('proxy-sign-modal'); if (modal) modal.style.display = 'none'; }
-        function setProxyNote(text) { const noteInput = document.getElementById('proxy-note-input'); if (noteInput) noteInput.value = text; }
+        function setProxyQuick(type) { const leaveSelect = document.getElementById('proxy-leave-type'); if (leaveSelect) leaveSelect.value = type; }
 
         async function submitProxySignIn() {
-            const noteInput = document.getElementById('proxy-note-input');
-            const note = noteInput ? noteInput.value.trim() : "";
+            const leaveType = document.getElementById('proxy-leave-type').value;
+            const reason = document.getElementById('proxy-reason-input').value.trim();
             const btn = document.getElementById('proxy-submit-btn');
-            if (btn) { btn.disabled = true; btn.innerText = '處理中...'; }
+            if (btn) { btn.disabled = true; btn.innerText = '更新中...'; }
             try {
                 const params = new URLSearchParams();
-                params.append('action', 'signIn'); params.append('group', proxyTarget.group);
-                params.append('name', proxyTarget.name); params.append('note', note || '正常出席');
+                params.append('action', 'signIn'); 
+                params.append('group', proxyTarget.group);
+                params.append('name', proxyTarget.name); 
+                params.append('leaveType', leaveType); 
+                params.append('reason', reason);       
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
                 const result = await res.json();
                 if (result.success || result.status === 'success') {
-                    toast(`${proxyTarget.name} 紀錄已更新`); closeProxyModal(); setTimeout(loadAttendanceReport, 500);
+                    toast(`${proxyTarget.name} 狀態已更新`); 
+                    closeProxyModal(); 
+                    setTimeout(loadAttendanceReport, 500);
                 } else { throw new Error(); }
-            } catch (e) { toast('失敗', true); if (btn) { btn.disabled = false; btn.innerText = '送出代簽紀錄'; } }
+            } catch (e) { toast('操作失敗', true); if (btn) { btn.disabled = false; btn.innerText = '確認送出紀錄'; } }
         }
+
+        function closeDetailModal() { const modal = document.getElementById('detail-modal'); if (modal) modal.style.display = 'none'; }
 
         async function performSignIn() {
             const btn = document.getElementById('signin-btn'); if (btn) btn.disabled = true;
             try {
-                const params = new URLSearchParams({ action: 'signIn', group: currentUser.group, name: currentUser.name, note: '自主簽到' });
+                const params = new URLSearchParams({ action: 'signIn', group: currentUser.group, name: currentUser.name, leaveType: '正常出席', reason: '自主簽到' });
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
                 const result = await res.json();
                 if (result.success || result.status === 'success') { toast('簽到成功'); checkAttendance(); }
-                else { toast(result.error || '簽到失敗', true); if (btn) btn.disabled = false; }
-            } catch (e) { toast('連線失敗', true); if (btn) btn.disabled = false; }
+                else { throw new Error(); }
+            } catch (e) { toast('簽到失敗', true); if (btn) btn.disabled = false; }
         }
 
         async function handleRegister() {
-            const groupSelect = document.getElementById('reg-group');
-            const nameSelect = document.getElementById('reg-name');
-            const group = groupSelect.value, name = nameSelect.value, pass = document.getElementById('reg-pass').value, confirm = document.getElementById('reg-pass-confirm').value;
-            if (!group || !name || !pass) return toast('資訊不全', true);
-            if (pass.length < 6) return toast('密碼至少 6 位', true);
-            if (pass !== confirm) return toast('確認密碼錯誤', true);
+            const g = document.getElementById('reg-group').value, n = document.getElementById('reg-name').value, p = document.getElementById('reg-pass').value, c = document.getElementById('reg-pass-confirm').value;
+            if (!g || !n || !p) return toast('資訊不全', true);
+            if (p.length < 6) return toast('密碼至少 6 位', true);
+            if (p !== c) return toast('確認密碼錯誤', true);
             const btn = document.getElementById('reg-btn'); if (btn) btn.disabled = true;
             try {
-                const params = new URLSearchParams({ action: 'register', group, name, password: pass });
+                const params = new URLSearchParams({ action: 'register', group: g, name: n, password: p });
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.success || result.status === 'success') { toast('註冊成功'); switchView('login'); }
-            } catch (e) { toast('失敗', true); }
+                if ((await res.json()).success) { toast('註冊成功！'); switchView('login'); }
+            } catch (e) { toast('註冊失敗', true); }
             if (btn) btn.disabled = false;
         }
 
         async function handleLogin() {
-            const groupSelect = document.getElementById('login-group');
-            const nameSelect = document.getElementById('login-name');
-            const passInput = document.getElementById('login-pass');
-            if (!groupSelect || !nameSelect || !passInput) return;
-            const group = groupSelect.value, name = nameSelect.value, password = passInput.value;
-            if (!group || !name || !password) return toast('請輸入帳密', true);
-            const btn = document.getElementById('login-btn'); if (btn) { btn.disabled = true; btn.innerText = '驗證中...'; }
+            const gSelect = document.getElementById('login-group'), nSelect = document.getElementById('login-name'), pInput = document.getElementById('login-pass');
+            if (!gSelect || !nSelect || !pInput) return;
+            const g = gSelect.value, n = nSelect.value, p = pInput.value;
+            if (!g || !n || !p) return toast('請輸入帳密', true);
+            const btn = document.getElementById('login-btn'); if (btn) { btn.disabled = true; btn.innerText = '登入中...'; }
             try {
-                const params = new URLSearchParams({ action: 'login', group, name, password });
+                const params = new URLSearchParams({ action: 'login', group: g, name: n, password: p });
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
                 const result = await res.json();
                 if (result.success || result.status === 'success') {
@@ -794,17 +776,16 @@
         }
 
         async function checkAttendance() {
-            const statusDiv = document.getElementById('attendance-status');
-            const btn = document.getElementById('signin-btn');
+            const statusDiv = document.getElementById('attendance-status'), btn = document.getElementById('signin-btn');
             if (!statusDiv) return;
             try {
                 const res = await fetch(`${APPS_SCRIPT_URL}?action=checkAttendance&group=${encodeURIComponent(currentUser.group)}&name=${encodeURIComponent(currentUser.name)}`);
                 const result = await res.json();
                 if (result.signedIn) {
-                    statusDiv.innerHTML = `<p class="text-emerald-600 font-bold">✅ 今日已完成簽到<br><span class="text-xs text-slate-400 font-normal">簽到時間：${result.time}</span></p>`;
+                    statusDiv.innerHTML = `<p class="text-emerald-600 font-bold">✅ 今日已完成簽到<br><span class="text-xs text-slate-400 font-normal">時間：${result.time}</span></p>`;
                     if (btn) btn.classList.add('hidden');
                 } else {
-                    statusDiv.innerHTML = `<p class="text-slate-400">尚未完成今日簽到</p>`;
+                    statusDiv.innerHTML = `<p class="text-slate-400">尚未簽到</p>`;
                     if (btn) btn.classList.remove('hidden');
                 }
             } catch (e) { }
@@ -837,27 +818,24 @@
                     historyData = result.data;
                     list.innerHTML = result.data.map((r, index) => `
                         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center cursor-pointer hover:border-emerald-300 transition-all fade-in" onclick="showExamDetail(${index})">
-                            <div><div class="text-xs text-slate-400 text-[10px]">${r.timestamp}</div><div class="font-bold text-slate-700">${r.quizType}</div></div>
+                            <div><div class="text-xs text-slate-400 text-[10px] font-mono">${r.timestamp}</div><div class="font-bold text-slate-700">${r.quizType}</div></div>
                             <div class="text-3xl font-black text-emerald-500">${r.score}</div>
                         </div>
                     `).join('');
-                } else list.innerHTML = '<div class="text-center py-10 text-slate-400 bg-white rounded-2xl">尚無紀錄</div>';
+                } else list.innerHTML = '<div class="text-center py-10 text-slate-400 bg-white rounded-2xl">無成績紀錄</div>';
             } catch (e) { }
         }
 
         function showExamDetail(index) {
-            const record = historyData[index];
-            if(!record || !record.details) return;
-            let details = JSON.parse(record.details);
-            const body = document.getElementById('detail-body');
-            const title = document.getElementById('detail-title');
+            const record = historyData[index]; if(!record || !record.details) return;
+            const details = JSON.parse(record.details), body = document.getElementById('detail-body'), title = document.getElementById('detail-title');
             if (title) title.innerText = `${record.quizType} (${record.score}分)`;
             if (body) {
                 body.innerHTML = details.map((d, i) => {
-                    const imgHtml = (d.imageUrl || d.img) ? `<div class="mb-3 text-center"><img src="${d.imageUrl || d.img}" class="max-w-full h-auto rounded-lg mx-auto shadow-sm" onerror="this.style.display='none'"></div>` : '';
+                    const imgHtml = d.imageUrl ? `<div class="mb-3 text-center"><img src="${d.imageUrl}" class="max-w-full h-auto rounded-lg mx-auto shadow-sm" onerror="this.style.display='none'"></div>` : '';
                     return `
                     <div class="p-4 rounded-xl border ${d.isCorrect ? 'border-emerald-100 bg-emerald-50/50' : 'border-red-100 bg-red-50/50'}">
-                        <div class="font-bold mb-2 text-slate-800 text-sm leading-relaxed">${i+1}. ${d.question || d.title} ${d.isCorrect ? '✅' : '❌'}</div>
+                        <div class="font-bold mb-2 text-slate-800 text-sm leading-relaxed">${i+1}. ${d.question} ${d.isCorrect ? '✅' : '❌'}</div>
                         ${imgHtml}
                         <div class="text-xs">你的回答：<span class="${d.isCorrect ? 'text-emerald-600' : 'text-red-600'} font-bold">${d.userAnswer}</span></div>
                         ${!d.isCorrect ? `<div class="text-xs text-emerald-600 font-bold mt-1">正確答案：${Array.isArray(d.correctAnswer)?d.correctAnswer.join(', '):d.correctAnswer}</div>` : ''}
@@ -866,6 +844,8 @@
             }
             const modal = document.getElementById('detail-modal'); if (modal) modal.style.display = 'flex';
         }
+
+        function closeDetailModal() { const modal = document.getElementById('detail-modal'); if (modal) modal.style.display = 'none'; }
 
         async function fetchSheetQuiz(type) {
             const [q1, q2] = await Promise.all([fetchSingleSheet(QUIZ_GIDS['隨堂']), fetchSingleSheet(QUIZ_GIDS[type])]);
@@ -885,25 +865,25 @@
 
         function renderQuiz() {
             const quizContent = document.getElementById('quiz-content'); if (!quizContent) return;
-            let html = `<div class="bg-emerald-50 p-3 rounded-xl mb-4 text-emerald-800 text-xs font-bold text-center border border-emerald-100 shadow-inner">測驗中 - 請仔細作答</div>`;
+            let html = `<div class="bg-emerald-50 p-3 rounded-xl mb-4 text-emerald-800 text-xs font-bold text-center border border-emerald-100 shadow-inner tracking-widest uppercase">考試中...</div>`;
             quizData.forEach((q, i) => {
                 const qId = `q${i+1}`;
                 let optHtml = '';
                 const imgHtml = q.imageUrl ? `<div class="mb-4 text-center"><img src="${q.imageUrl}" class="max-w-full h-auto rounded-xl mx-auto shadow-sm border border-slate-100" onerror="this.style.display='none'"></div>` : '';
                 if(q.type !== 'fill') {
                     const shuffled = [...q.options].sort(()=>Math.random()-0.5);
-                    optHtml = shuffled.map(o => `<label class="hover:bg-slate-50 border p-3 rounded-xl flex items-center mb-2 cursor-pointer transition-all"><input type="${q.type==='single'?'radio':'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600 border-slate-300 focus:ring-emerald-500"><span class="text-slate-700 text-sm font-medium">${o}</span></label>`).join('');
+                    optHtml = shuffled.map(o => `<label class="hover:bg-slate-50 border p-3 rounded-xl flex items-center mb-2 cursor-pointer transition-all active:scale-[0.98]"><input type="${q.type==='single'?'radio':'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600 border-slate-300 focus:ring-emerald-500"><span class="text-slate-700 text-sm font-medium">${o}</span></label>`).join('');
                 } else {
                     optHtml = `<input type="text" class="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner" data-qid="${qId}" placeholder="輸入答案...">`;
                 }
                 html += `<div class="question-card p-6 rounded-2xl shadow-sm mb-6 bg-white border border-slate-100" id="${qId}"><h3 class="font-bold mb-4 text-slate-800 text-base leading-relaxed">${i+1}. ${q.question}</h3>${imgHtml}<div class="options">${optHtml}</div></div>`;
             });
-            html += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-2xl font-bold text-lg mb-10 shadow-xl shadow-emerald-100 transition-all">確認交卷</button>`;
+            html += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-2xl font-bold text-lg mb-10 shadow-xl transition-transform active:scale-[0.98]">確認交卷</button>`;
             quizContent.innerHTML = html; window.scrollTo(0,0);
         }
 
         async function handleQuizSubmit() {
-            const btn = document.getElementById('quiz-final-btn'); if (btn) { btn.disabled = true; btn.innerText = '正在提交...'; }
+            const btn = document.getElementById('quiz-final-btn'); if (btn) { btn.disabled = true; btn.innerText = '提交中...'; }
             const answers = quizData.map((q, i) => {
                 const el = document.getElementById(`q${i+1}`);
                 let val = '未作答'; if (!el) return { qId: `q${i+1}`, userAnswer: val };
@@ -916,14 +896,22 @@
                 const params = new URLSearchParams({ action: 'submitQuiz', group: currentUser.group, name: currentUser.name, quizType: document.getElementById('quiz-type-select').value, userAnswersJson: JSON.stringify(answers), quizDataJson: JSON.stringify(quizData) });
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
                 const result = await res.json();
-                if (result.status === 'success') { toast('測驗提交成功'); switchView('results'); }
+                if (result.status === 'success') { toast('提交成功'); switchView('results'); }
                 else throw new Error();
             } catch (e) { toast('提交失敗', true); if (btn) { btn.disabled = false; btn.innerText = '確認交卷'; } }
         }
 
         function logout() { localStorage.removeItem('sh_user_secure'); location.reload(); }
         function updateDateDisplay() { const dateEl = document.getElementById('today-date'); if (dateEl) dateEl.innerText = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }); }
-        function toast(msg, isError = false) { const box = document.getElementById('message-box'); if (!box) return; box.innerText = msg; box.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[1000] fade-in font-bold ${isError ? 'bg-red-500' : 'bg-emerald-600'}`; box.style.display = 'block'; setTimeout(() => { if (box) box.style.display = 'none'; }, 5000); }
+        
+        function toast(msg, isError = false) { 
+            const box = document.getElementById('message-box'); 
+            if (!box) return;
+            box.innerText = msg; 
+            box.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] fade-in font-bold ${isError ? 'bg-red-500' : 'bg-emerald-600'} pointer-events-none`; 
+            box.style.display = 'block'; 
+            setTimeout(() => { if (box) box.style.display = 'none'; }, 5000); 
+        }
     </script>
 </body>
 </html>
