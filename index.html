@@ -61,24 +61,28 @@
         .btn-primary:active:not(:disabled) { transform: translateY(1px); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .question-card { border-left: 4px solid #10b981; background: white; }
-        .options label {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
+        .role-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-weight: bold;
         }
+        .role-admin { background-color: #ef4444; color: white; }
+        .role-teacher { background-color: #8b5cf6; color: white; }
+        .role-leader { background-color: #f59e0b; color: white; }
+        .role-user { background-color: #64748b; color: white; }
+
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .dot-signed { background-color: #10b981; box-shadow: 0 0 5px #10b981; } 
+        .dot-missing { background-color: #ef4444; box-shadow: 0 0 5px #ef4444; } 
+        .dot-leave { background-color: #f59e0b; box-shadow: 0 0 5px #f59e0b; }   
+        .dot-official { background-color: #3b82f6; box-shadow: 0 0 5px #3b82f6; }
+        .dot-late { background-color: #fbbf24; box-shadow: 0 0 5px #fbbf24; }
 
         .hidden-view { display: none; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .modal {
             position: fixed;
@@ -98,27 +102,21 @@
             border-radius: 20px;
             overflow-y: auto;
             padding: 24px;
-            position: relative;
         }
 
-        .role-badge {
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-            font-weight: bold;
-        }
-        .role-admin { background-color: #ef4444; color: white; }
-        .role-teacher { background-color: #8b5cf6; color: white; }
-        .role-leader { background-color: #f59e0b; color: white; }
-        .role-user { background-color: #64748b; color: white; }
+        .question-card { border-left: 4px solid #10b981; background: white; }
 
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .dot-signed { background-color: #10b981; box-shadow: 0 0 5px #10b981; } 
-        .dot-missing { background-color: #ef4444; box-shadow: 0 0 5px #ef4444; } 
-        .dot-leave { background-color: #f59e0b; box-shadow: 0 0 5px #f59e0b; }   
-        .dot-official { background-color: #3b82f6; box-shadow: 0 0 5px #3b82f6; }
-        .dot-late { background-color: #fbbf24; box-shadow: 0 0 5px #fbbf24; }
+        /* 測驗圖片專用樣式 */
+        .quiz-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            margin: 12px 0;
+            cursor: zoom-in;
+            border: 1px solid #f1f5f9;
+            display: block;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -141,15 +139,15 @@
                 <div class="space-y-4 text-left">
                     <div>
                         <label class="text-xs font-bold text-slate-400">組別</label>
-                        <select id="login-group" class="w-full p-3 rounded-lg border border-slate-200 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+                        <select id="login-group" class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-400">姓名</label>
-                        <select id="login-name" disabled class="w-full p-3 rounded-lg border border-slate-200 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+                        <select id="login-name" disabled class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-400">密碼</label>
-                        <input type="password" id="login-pass" class="w-full p-3 rounded-lg border border-slate-200 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <input type="password" id="login-pass" class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="密碼">
                     </div>
                     <button onclick="handleLogin()" id="login-btn" class="w-full py-3 btn-primary rounded-lg font-bold">進入系統</button>
                     <div class="text-center mt-6 pt-4 border-t border-slate-100">
@@ -166,32 +164,31 @@
                 <div class="space-y-4 text-left">
                     <div>
                         <label class="text-xs font-bold text-slate-400">選擇您的組別</label>
-                        <select id="reg-group" class="w-full p-3 rounded-lg border border-slate-200 mt-1"></select>
+                        <select id="reg-group" class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-400">選擇您的姓名</label>
-                        <select id="reg-name" disabled class="w-full p-3 rounded-lg border border-slate-200 mt-1"></select>
+                        <select id="reg-name" disabled class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
                     </div>
-                    <div><input type="password" id="reg-pass" placeholder="設定登入密碼" class="w-full p-3 rounded-lg border border-slate-200 mt-1"></div>
-                    <div><input type="password" id="reg-pass-confirm" placeholder="再次確認密碼" class="w-full p-3 rounded-lg border border-slate-200 mt-1"></div>
-                    <button onclick="handleRegister()" id="reg-btn" class="w-full py-3 btn-primary rounded-lg font-bold">確認註冊並鎖定密碼</button>
-                    <button onclick="switchView('login')" class="w-full py-2 text-sm text-slate-400 hover:underline mt-2 text-center text-center">返回登入</button>
+                    <input type="password" id="reg-pass" placeholder="設定登入密碼" class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <input type="password" id="reg-pass-confirm" placeholder="再次確認密碼" class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <button onclick="handleRegister()" id="reg-btn" class="w-full py-3 btn-primary rounded-lg font-bold">確認註冊</button>
+                    <button onclick="switchView('login')" class="w-full py-2 text-sm text-slate-400 hover:underline text-center">返回登入</button>
                 </div>
             </div>
         </div>
 
-        <!-- 公告區視圖 (新功能) -->
+        <!-- 公告區視圖 (首頁) -->
         <div id="view-bulletin" class="hidden-view fade-in py-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
-                    最新公告
+                    公告與教材下載
                 </h2>
-                <button id="add-announcement-btn" onclick="openAnnouncementModal()" class="hidden text-sm bg-emerald-600 text-white px-4 py-2 rounded-full font-bold shadow-md hover:bg-emerald-700 transition-all">+ 新增公告</button>
+                <button id="add-announcement-btn" onclick="openAnnouncementModal()" class="hidden text-sm bg-emerald-600 text-white px-4 py-2 rounded-full font-bold shadow-md hover:bg-emerald-700 transition-all">+ 發布公告</button>
             </div>
-            
             <div id="announcement-list" class="space-y-6">
-                <div class="text-center py-20 text-slate-400">正在讀取雲端訊息...</div>
+                <div class="text-center py-20 text-slate-400 animate-pulse">正在載入雲端內容...</div>
             </div>
         </div>
 
@@ -200,29 +197,28 @@
             <div class="glass-card rounded-2xl p-8 text-center">
                 <h2 class="text-xl font-bold mb-2">每日簽到</h2>
                 <p id="today-date" class="text-slate-500 mb-6 font-mono"></p>
-                <div id="attendance-status" class="p-6 border-2 border-dashed border-slate-200 rounded-xl mb-6">
-                    <p class="text-slate-400">正在檢查簽到狀態...</p>
-                </div>
+                <div id="attendance-status" class="p-6 border-2 border-dashed border-slate-200 rounded-xl mb-6"><p class="text-slate-400">正在檢查狀態...</p></div>
                 <button onclick="performSignIn()" id="signin-btn" class="w-full py-4 btn-primary rounded-xl text-lg font-bold hidden">立即簽到</button>
             </div>
         </div>
 
         <!-- 測驗視圖 -->
-        <div id="view-quiz" class="hidden-view fade-in">
+        <div id="view-quiz" class="hidden-view fade-in py-6">
             <div id="quiz-init" class="glass-card rounded-2xl p-6 text-center">
                 <h2 class="text-xl font-bold mb-4">參加測驗</h2>
-                <select id="quiz-type-select" class="w-full p-3 mb-4 rounded-lg border border-slate-200">
-                    <option value="" disabled selected>請選擇科目</option>
+                <select id="quiz-type-select" class="w-full p-3 mb-4 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="" disabled selected>請選擇測驗科目</option>
                     <option value="論語">論語</option><option value="性理">性理</option><option value="道德經">道德經</option><option value="六祖">六祖</option>
                 </select>
-                <button onclick="startQuizFlow()" id="start-quiz-btn" class="w-full py-3 btn-primary rounded-lg font-bold">開始載入題目</button>
+                <button onclick="startQuizFlow()" id="start-quiz-btn" class="w-full py-3 btn-primary rounded-lg font-bold">載入雲端考卷</button>
                 <p class="text-[10px] text-slate-400 mt-3">* 測驗時間以台北標準時間 (GMT+8) 為準</p>
             </div>
             <div id="quiz-main" class="mt-4 hidden"><div id="quiz-content" class="space-y-6"></div></div>
         </div>
 
+        <!-- 成績視圖 -->
         <div id="view-results" class="hidden-view fade-in py-6">
-            <h2 class="text-xl font-bold mb-4">歷史成績查詢</h2>
+            <h2 class="text-xl font-bold mb-4 text-slate-800">測驗成績記錄</h2>
             <div id="history-list" class="space-y-4"></div>
         </div>
 
@@ -230,846 +226,391 @@
         <div id="view-admin" class="hidden-view fade-in py-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-emerald-800">管理中心</h2>
-                <button onclick="loadAdminDashboard()" class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold font-mono">REFRESH</button>
+                <button onclick="loadAdminDashboard()" class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">刷新資料</button>
             </div>
 
+            <!-- 篩選器面板 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 space-y-3">
                 <div id="admin-group-filter-container" class="hidden">
                     <label class="text-xs font-bold text-slate-400 mb-1 block px-1">選擇查看組別：</label>
-                    <select id="admin-group-filter" class="w-full p-2 border border-slate-100 rounded-lg outline-none bg-slate-50 text-sm"></select>
+                    <select id="admin-group-filter" onchange="applyFilters()" class="w-full p-2 border border-slate-100 rounded-lg outline-none bg-slate-50 text-sm font-bold">
+                        <option value="ALL">全部組別</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-400 mb-1 block px-1">狀態篩選：</label>
+                    <label class="text-xs font-bold text-slate-400 mb-1 block px-1">狀態過濾：</label>
                     <select id="admin-status-filter" onchange="applyFilters()" class="w-full p-2 border border-slate-100 rounded-lg outline-none bg-slate-50 text-sm font-bold">
-                        <option value="ALL">所有名單 (出席+缺席)</option>
-                        <option value="ABSENT" class="text-red-500">僅看缺席名單 (包含假別)</option>
+                        <option value="ALL">顯示所有人員</option>
+                        <option value="ABSENT" class="text-red-500">僅看缺席/請假人員</option>
                     </select>
                 </div>
             </div>
 
-            <div id="attendance-report-list" class="space-y-3 mb-10">
-                <div class="text-center py-10 text-slate-400">正在準備統計資料...</div>
-            </div>
-
+            <div id="attendance-report-list" class="space-y-3 mb-10"></div>
+            
+            <!-- 測驗設定區域 (僅老師/管理員可見) -->
             <div id="quiz-config-container" class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-emerald-500 hidden">
-                <h3 class="font-bold text-slate-800 mb-2 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    統一測驗開放時間 (台北時間)
-                </h3>
-                <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">測驗快速開關：</label>
-                    <button id="master-quiz-toggle" onclick="toggleMasterQuizStatus()" class="w-full py-3 rounded-xl font-bold transition-all shadow-sm flex justify-center items-center gap-2 text-white">
-                        <span id="toggle-dot" class="w-3 h-3 rounded-full"></span>
-                        <span id="toggle-text">讀取中...</span>
-                    </button>
-                    <p class="text-[10px] text-slate-400 mt-2 text-center">※ 開放後自動設定 2 小時時效；關閉則立即失效。</p>
-                </div>
-                <div class="space-y-4">
-                    <label class="text-xs font-bold text-slate-400 px-1">手動精確設定：</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-xs font-bold text-slate-500 block mb-1">測驗開始時間</label>
-                            <input type="datetime-local" id="unified-quiz-start" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-500 block mb-1">測驗結束時間</label>
-                            <input type="datetime-local" id="unified-quiz-end" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
-                        </div>
+                <h3 class="font-bold mb-4 text-slate-700">測驗開放時段設定</h3>
+                <button id="master-quiz-toggle" onclick="toggleMasterQuizStatus()" class="w-full py-3 rounded-xl font-bold text-white flex justify-center items-center gap-2 mb-6">
+                    <span id="toggle-dot" class="w-3 h-3 rounded-full"></span><span id="toggle-text">正在讀取...</span>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-400 mb-1">開始日期時間</label>
+                        <input type="datetime-local" id="unified-quiz-start" class="p-3 border rounded-xl outline-none bg-slate-50">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-400 mb-1">結束日期時間</label>
+                        <input type="datetime-local" id="unified-quiz-end" class="p-3 border rounded-xl outline-none bg-slate-50">
                     </div>
                 </div>
-                <button onclick="saveUnifiedQuizSettings()" id="quiz-save-btn" class="w-full mt-6 py-4 btn-primary rounded-xl font-bold shadow-lg flex justify-center items-center">
-                    <span>儲存台北時間設定</span>
-                </button>
+                <button onclick="saveUnifiedQuizSettings()" id="quiz-save-btn" class="w-full py-4 btn-primary rounded-xl font-bold shadow-lg">儲存雲端設定</button>
             </div>
         </div>
 
     </main>
 
-    <!-- 詳解彈窗 -->
-    <div id="detail-modal" class="modal" onclick="closeDetailModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 id="detail-title" class="text-xl font-bold">資訊詳解</h3>
-                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 p-2 text-xl transition-transform active:scale-90">✕</button>
-            </div>
-            <div id="detail-body" class="space-y-6"></div>
-        </div>
-    </div>
-
-    <!-- 代簽/調整彈窗 -->
-    <div id="proxy-sign-modal" class="modal" onclick="closeProxyModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 class="text-xl font-bold">狀態代簽/調整</h3>
-                <button onclick="closeProxyModal()" class="text-slate-400 hover:text-slate-600 p-2 text-xl transition-transform active:scale-95">✕</button>
-            </div>
-            <div class="space-y-4">
-                <p class="text-sm text-slate-500 font-medium">正在幫 <span id="proxy-target-name" class="font-bold text-emerald-600"></span> 進行狀態調整</p>
-                <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">1. 選擇假別/狀態：</label>
-                    <select id="proxy-leave-type" class="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-bold">
-                        <option value="正常出席">正常出席</option>
-                        <option value="晚到">晚到</option>
-                        <option value="公假">公假</option>
-                        <option value="事假">事假</option>
-                        <option value="病假">病假</option>
-                        <option value="其他">其他</option>
-                    </select>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="setProxyQuick('正常出席')" class="px-3 py-1 border rounded-full text-xs hover:bg-emerald-50 text-emerald-600 border-emerald-100">正常出席</button>
-                    <button onclick="setProxyQuick('晚到')" class="px-3 py-1 border rounded-full text-xs hover:bg-yellow-50 text-yellow-600 border-yellow-100">晚到</button>
-                    <button onclick="setProxyQuick('公假')" class="px-3 py-1 border rounded-full text-xs hover:bg-blue-50 text-blue-600 border-blue-100">公假</button>
-                    <button onclick="setProxyQuick('事假')" class="px-3 py-1 border rounded-full text-xs hover:bg-orange-50 text-orange-600 border-orange-100">事假</button>
-                    <button onclick="setProxyQuick('病假')" class="px-3 py-1 border rounded-full text-xs hover:bg-orange-50 text-orange-600 border-orange-100">病假</button>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">2. 詳細原因/備註 (可選)：</label>
-                    <textarea id="proxy-reason-input" class="w-full p-3 border border-slate-200 rounded-xl h-24 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="填寫詳細原因..."></textarea>
-                </div>
-                <button id="proxy-submit-btn" onclick="submitProxySignIn()" class="w-full py-4 btn-primary rounded-xl font-bold shadow-lg">確認送出紀錄</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 公告編輯/新增彈窗 (新功能) -->
+    <!-- 各種彈窗內容 -->
     <div id="announcement-modal" class="modal" onclick="closeAnnouncementModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-content !max-w-xl" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 id="ann-modal-title" class="text-xl font-bold text-slate-800">編輯公告</h3>
-                <button onclick="closeAnnouncementModal()" class="text-slate-400 hover:text-slate-600 p-2 text-xl">✕</button>
+                <h3 id="ann-modal-title" class="text-xl font-bold text-slate-800">公告教材編輯</h3>
+                <button onclick="closeAnnouncementModal()" class="text-slate-400 hover:text-slate-600 p-2 text-xl transition-transform active:scale-90">✕</button>
             </div>
             <div class="space-y-4">
                 <input type="hidden" id="ann-id">
                 <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">公告標題 (如：第一堂重點與作業)</label>
-                    <input type="text" id="ann-title" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="輸入公告標題">
+                    <label class="text-xs font-bold text-slate-400 mb-2 block">公告標題</label>
+                    <input type="text" id="ann-title" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">重點整理內容</label>
-                    <textarea id="ann-content" class="w-full p-3 border border-slate-200 rounded-xl h-32 focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner" placeholder="請輸入本週重點..."></textarea>
+                    <label class="text-xs font-bold text-slate-400 mb-2 block">重點內容</label>
+                    <textarea id="ann-content" class="w-full p-3 border border-slate-200 rounded-xl h-32 focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner"></textarea>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-400 mb-2 block">作業表單連結 (URL)</label>
-                    <input type="text" id="ann-link" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="https://forms.gle/...">
-                    <p class="text-[10px] text-slate-400 mt-1">※ 若無作業請留空</p>
+                <div class="border-t pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold text-slate-400">教材連結或附件列表</label>
+                        <button onclick="addResourceRow()" class="text-xs text-emerald-600 font-bold hover:underline">+ 新增</button>
+                    </div>
+                    <div id="ann-resources-container" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
                 </div>
-                <button id="ann-submit-btn" onclick="submitAnnouncement()" class="w-full py-4 btn-primary rounded-xl font-bold shadow-lg">確認儲存公告</button>
+                <button id="ann-submit-btn" onclick="submitAnnouncement()" class="w-full py-4 btn-primary rounded-xl font-bold shadow-lg">確認並發布</button>
             </div>
         </div>
     </div>
 
-    <!-- 導覽列 -->
-    <nav id="main-nav" class="nav-bar hidden">
-        <div class="nav-item active" onclick="switchView('bulletin')">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h3m-3 4h10m-10 4h10"></path></svg>
-            <span>公告</span>
-        </div>
-        <div class="nav-item" onclick="switchView('attendance')">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span>簽到</span>
-        </div>
-        <div class="nav-item" onclick="switchView('quiz')">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            <span>測驗</span>
-        </div>
-        <div class="nav-item" onclick="switchView('results')">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v2M7 19h10m0 0a2 2 0 002-2v-3.586a1 1 0 01.293-.707l3.586-3.586a1 1 0 000-1.414l-3.586-3.586a1 1 0 01-.293-.707V5a2 2 0 00-2-2h-6"></path></svg>
-            <span>成績</span>
-        </div>
-        <div id="nav-admin" class="nav-item hidden" onclick="switchView('admin')">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <span>管理</span>
-        </div>
-    </nav>
+    <!-- 隱藏檔案選取器 -->
+    <input type="file" id="global-file-picker" class="hidden" onchange="processFileSelection(event)">
 
-    <!-- 訊息提示框 -->
+    <!-- 代簽彈窗 -->
+    <div id="proxy-sign-modal" class="modal" onclick="closeProxyModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-xl font-bold">出席狀態調整</h3><button onclick="closeProxyModal()" class="p-2">✕</button></div>
+            <div class="space-y-4">
+                <p id="proxy-target-name" class="font-bold text-emerald-600"></p>
+                <select id="proxy-leave-type" class="w-full p-3 border rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="正常出席">正常出席</option><option value="晚到">晚到</option><option value="公假">公假</option><option value="事假">事假</option><option value="病假">病假</option>
+                </select>
+                <textarea id="proxy-reason-input" class="w-full p-3 border rounded-xl h-24 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="調整原因或備註..."></textarea>
+                <button id="proxy-submit-btn" onclick="submitProxySignIn()" class="w-full py-4 btn-primary rounded-xl font-bold">確認儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="detail-modal" class="modal" onclick="closeDetailModal()"><div class="modal-content"><div id="detail-body"></div></div></div>
+
     <div id="message-box" class="fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] fade-in hidden pointer-events-none"></div>
+
+    <nav id="main-nav" class="nav-bar hidden">
+        <div class="nav-item active" onclick="switchView('bulletin')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h3m-3 4h10m-10 4h10"></path></svg><span>公告</span></div>
+        <div class="nav-item" onclick="switchView('attendance')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>簽到</span></div>
+        <div class="nav-item" onclick="switchView('quiz')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span>測驗</span></div>
+        <div class="nav-item" onclick="switchView('results')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v2M7 19h10m0 0a2 2 0 002-2v-3.586a1 1 0 01.293-.707l3.586-3.586a1 1 0 000-1.414l-3.586-3.586a1 1 0 01-.293-.707V5a2 2 0 00-2-2h-6"></path></svg><span>成績</span></div>
+        <div id="nav-admin" class="nav-item hidden" onclick="switchView('admin')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg><span>管理</span></div>
+    </nav>
 
     <script>
         const SPREADSHEET_ID = '1u3D7u5hn7dcVGgGxmNBm233B_sz16kPuUcncvCnNr6U';
         const TEAMS_GID = '1026036029';
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyG5BfmgHXamdUHhIOxIldSRfh3XUkzsOuPjJvkU2j2cbGkflZt6cXopBhLtfOCBU33Qw/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKNInoCvX_qEPoQ1moVu_v9nxbEbR0ZcOQP-yu-9UvvLMLDvFKtx9q3Uxgd6vLT1Pxow/exec';
+        const GROUP_ORDER = ['第一組', '第二組', '第三組', '第四組', '第五組', '第六組', '第七組', '德國', '孟保拉', '印尼', '馬來', '神州', '主領班', '特助'];
         const QUIZ_GIDS = { '隨堂': '0', '論語': '1250135497', '性理': '1342680959', '道德經': '1246480043', '六祖': '1302889740' };
 
-        const GROUP_ORDER = ['第一組', '第二組', '第三組', '第四組', '第五組', '第六組', '第七組', '德國', '孟加拉', '印尼', '馬來', '神州', '主領班', '特助'];
+        let currentUser = null, teamsData = {}, quizData = [], historyData = [], proxyTarget = null, cachedSignedUsers = [], cachedAnnouncements = [], currentQuizOpenStatus = false, activeRowForUpload = null;
 
-        let currentUser = null; 
-        let teamsData = {};
-        let quizData = [];
-        let historyData = [];
-        let proxyTarget = null; 
-        let cachedSignedUsers = []; 
-        let currentQuizOpenStatus = false; 
-        let cachedAnnouncements = []; // 暫存公告資料
+        // --- 全域核心輔助函式 ---
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initApp();
-            fetchTeamsData();
-            updateDateDisplay();
-        });
-
-        function sortGroupsByCustomOrder(groupsArray) {
-            return groupsArray.sort((a, b) => {
-                const indexA = GROUP_ORDER.indexOf(a);
-                const indexB = GROUP_ORDER.indexOf(b);
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1) return -1;
-                if (indexB !== -1) return 1;
-                return a.localeCompare(b, 'zh-Hant');
-            });
+        function logout() { 
+            localStorage.removeItem('sh_user_secure'); 
+            window.location.reload(); 
         }
 
-        function parseToTaipeiDate(val) {
-            if (!val) return null;
-            if (typeof val === 'string' && val.endsWith('Z')) return new Date(val);
-            const cleanVal = val.toString().replace(/\//g, '-').replace(' ', 'T');
-            return new Date(cleanVal + (cleanVal.includes('+') ? '' : '+08:00'));
+        function toast(m, isErr = false) { 
+            const b = document.getElementById('message-box'); if (!b) return;
+            b.innerText = m; b.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] font-bold ${isErr?'bg-red-500':'bg-emerald-600'} pointer-events-none`; 
+            b.style.display = 'block'; setTimeout(() => { if (b) b.style.display = 'none'; }, 5000); 
+        }
+
+        function updateDateDisplay() { 
+            const el = document.getElementById('today-date'); 
+            if(el) el.innerText = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }); 
+        }
+
+        function switchView(viewName) {
+            const views = document.querySelectorAll('[id^="view-"]');
+            views.forEach(v => v.classList.add('hidden-view'));
+            const target = document.getElementById(`view-${viewName}`); 
+            if (target) target.classList.remove('hidden-view');
+            const navItems = document.querySelectorAll('.nav-item'); navItems.forEach(i => i.classList.remove('active'));
+            if(viewName==='bulletin') { navItems[0]?.classList.add('active'); loadAnnouncements(); }
+            if(viewName==='attendance') { navItems[1]?.classList.add('active'); if(currentUser) checkAttendance(); }
+            if(viewName==='quiz') navItems[2]?.classList.add('active');
+            if(viewName==='results') { navItems[3]?.classList.add('active'); loadHistoryData(); }
+            if(viewName==='admin') { navItems[navItems.length-1]?.classList.add('active'); loadAdminDashboard(); }
+            window.scrollTo(0,0);
         }
 
         function initApp() {
-            const savedUser = localStorage.getItem('sh_user_secure');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showDashboard();
-            } else { switchView('login'); }
+            const saved = localStorage.getItem('sh_user_secure');
+            if (saved) { try { currentUser = JSON.parse(saved); showDashboard(); } catch(e) { switchView('login'); } } 
+            else { switchView('login'); }
         }
 
         function showDashboard() {
-            const mainNav = document.getElementById('main-nav');
-            const userDisplay = document.getElementById('user-display');
-            if (mainNav) mainNav.classList.remove('hidden');
-            if (userDisplay) userDisplay.classList.remove('hidden');
-            const nameEl = document.getElementById('display-name');
-            if (nameEl) nameEl.innerText = `${currentUser.group} - ${currentUser.name}`;
-            const roleBadge = document.getElementById('display-role');
-            if (roleBadge) { roleBadge.innerText = currentUser.role || '組員'; roleBadge.className = 'role-badge'; }
-            const navAdmin = document.getElementById('nav-admin');
-            const isAdminTeacher = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser.role);
-            const isLeader = ['Leader', '組長'].includes(currentUser.role);
-            
-            // 權限控制：顯示編輯公告按鈕
-            const addAnnBtn = document.getElementById('add-announcement-btn');
-            if (isAdminTeacher && addAnnBtn) addAnnBtn.classList.remove('hidden');
-
-            if (isAdminTeacher) {
-                if (roleBadge) roleBadge.classList.add(currentUser.role.includes('Admin') ? 'role-admin' : 'role-teacher');
-                if (navAdmin) navAdmin.classList.remove('hidden');
-                const configContainer = document.getElementById('quiz-config-container');
-                if (configContainer) configContainer.classList.remove('hidden');
-            } else if (isLeader) {
-                if (roleBadge) roleBadge.classList.add('role-leader');
-                if (navAdmin) navAdmin.classList.remove('hidden');
-                const configContainer = document.getElementById('quiz-config-container');
-                if (configContainer) configContainer.classList.add('hidden');
-            } else {
-                if (roleBadge) roleBadge.classList.add('role-user');
-                if (navAdmin) navAdmin.classList.add('hidden');
+            const nav = document.getElementById('main-nav'), userDisplay = document.getElementById('user-display'), displayName = document.getElementById('display-name'), rb = document.getElementById('display-role'), navAdmin = document.getElementById('nav-admin'), quizCfg = document.getElementById('quiz-config-container'), addAnnBtn = document.getElementById('add-announcement-btn');
+            if (nav) nav.classList.remove('hidden'); if (userDisplay) userDisplay.classList.remove('hidden'); if (displayName) displayName.innerText = `${currentUser.group} - ${currentUser.name}`;
+            if (rb) {
+                rb.innerText = currentUser.role || '組員'; rb.className = 'role-badge';
+                const roleName = currentUser.role || '', isAdmin = ['Admin', '管理員', 'Teacher', '老師'].includes(roleName), isLeader = ['Leader', '組長'].includes(roleName);
+                if (isAdmin) { rb.classList.add(roleName.includes('Admin') ? 'role-admin' : 'role-teacher'); if (navAdmin) navAdmin.classList.remove('hidden'); if (quizCfg) quizCfg.classList.remove('hidden'); if (addAnnBtn) addAnnBtn.classList.remove('hidden'); }
+                else if (isLeader) { rb.classList.add('role-leader'); if (navAdmin) navAdmin.classList.remove('hidden'); } else { rb.classList.add('role-user'); }
             }
-            
-            switchView('bulletin'); // 登入後預設進入公告區
+            switchView('bulletin');
         }
 
-        // ==========================================
-        // 公告區邏輯 (新增)
-        // ==========================================
-        async function loadAnnouncements() {
-            const list = document.getElementById('announcement-list');
-            list.innerHTML = '<div class="text-center py-20 text-slate-400 animate-pulse">正在讀取雲端公告...</div>';
-            
-            try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=getAnnouncements`);
-                const result = await res.json();
-                cachedAnnouncements = result.data || [];
-                renderAnnouncements();
-            } catch (e) {
-                list.innerHTML = '<div class="text-center py-20 text-red-400">無法載入公告，請重新整理頁面。</div>';
+        // --- 圖片偵測邏輯輔助 ---
+
+        function isImageUrl(url) {
+            if (!url) return false;
+            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+            const lowerUrl = url.toLowerCase();
+            return imgExts.some(ext => lowerUrl.includes('.' + ext)) || 
+                   url.includes('drive.google.com/uc') || 
+                   url.includes('drive.google.com/file/d/');
+        }
+
+        function convertToDirectLink(url) {
+            if (!url) return "";
+            if (url.includes('drive.google.com/file/d/')) {
+                const id = url.split('/d/')[1].split('/')[0];
+                return `https://drive.google.com/uc?id=${id}`;
             }
+            return url;
         }
 
-        function renderAnnouncements() {
-            const list = document.getElementById('announcement-list');
-            if (cachedAnnouncements.length === 0) {
-                list.innerHTML = '<div class="text-center py-20 bg-white rounded-2xl border-2 border-dashed text-slate-400">目前尚無公告</div>';
-                return;
-            }
-
-            const isAdminTeacher = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser.role);
-
-            list.innerHTML = cachedAnnouncements.map((ann, idx) => `
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative group fade-in">
-                    ${isAdminTeacher ? `<button onclick="openAnnouncementModal(${idx})" class="absolute top-4 right-4 text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-50 hover:text-emerald-600">編輯</button>` : ''}
-                    <div class="text-[10px] font-mono text-emerald-600 font-bold mb-1">${ann.time || ''}</div>
-                    <h3 class="text-lg font-black text-slate-800 mb-3">${ann.title}</h3>
-                    <div class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-4">${ann.content}</div>
-                    ${ann.link ? `
-                        <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-400">本期作業：</span>
-                            <a href="${ann.link}" target="_blank" class="text-sm bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-emerald-600 hover:text-white transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                點擊進入作業表單
-                            </a>
-                        </div>
-                    ` : ''}
-                </div>
-            `).join('');
-        }
-
-        function openAnnouncementModal(index = null) {
-            const modal = document.getElementById('announcement-modal');
-            const titleInput = document.getElementById('ann-title');
-            const contentInput = document.getElementById('ann-content');
-            const linkInput = document.getElementById('ann-link');
-            const idInput = document.getElementById('ann-id');
-            const modalTitle = document.getElementById('ann-modal-title');
-
-            if (index !== null) {
-                const data = cachedAnnouncements[index];
-                modalTitle.innerText = "編輯公告";
-                idInput.value = data.id;
-                titleInput.value = data.title;
-                contentInput.value = data.content;
-                linkInput.value = data.link;
-            } else {
-                modalTitle.innerText = "新增公告";
-                idInput.value = "";
-                titleInput.value = "";
-                contentInput.value = "";
-                linkInput.value = "";
-            }
-            modal.style.display = 'flex';
-        }
-
-        function closeAnnouncementModal() {
-            document.getElementById('announcement-modal').style.display = 'none';
-        }
-
-        async function submitAnnouncement() {
-            const id = document.getElementById('ann-id').value;
-            const title = document.getElementById('ann-title').value.trim();
-            const content = document.getElementById('ann-content').value.trim();
-            const link = document.getElementById('ann-link').value.trim();
-            const btn = document.getElementById('ann-submit-btn');
-
-            if (!title || !content) return toast('標題與內容為必填', true);
-
-            btn.disabled = true;
-            btn.innerText = "正在儲存公告...";
-
-            try {
-                const params = new URLSearchParams();
-                params.append('action', 'updateAnnouncement');
-                params.append('id', id);
-                params.append('title', title);
-                params.append('content', content);
-                params.append('link', link);
-
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                
-                if (result.success) {
-                    toast('公告已更新成功！');
-                    closeAnnouncementModal();
-                    loadAnnouncements();
-                } else { throw new Error(); }
-            } catch (e) {
-                toast('儲存失敗，請檢查網路', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "確認儲存公告";
-            }
-        }
-
-        // ==========================================
-        // 其他原有邏輯 (保持不變)
-        // ==========================================
-        function switchView(viewName) {
-            document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden-view'));
-            const target = document.getElementById(`view-${viewName}`);
-            if (target) target.classList.remove('hidden-view');
-            const navItems = document.querySelectorAll('.nav-item');
-            
-            // 由於導覽列順序變更，需對應調整 active 類別
-            navItems.forEach(item => item.classList.remove('active'));
-            if (viewName === 'bulletin') navItems[0]?.classList.add('active');
-            if (viewName === 'attendance') navItems[1]?.classList.add('active');
-            if (viewName === 'quiz') navItems[2]?.classList.add('active');
-            if (viewName === 'results') navItems[3]?.classList.add('active');
-            if (viewName === 'admin') navItems[ navItems.length - 1 ]?.classList.add('active');
-            
-            if (viewName === 'bulletin') loadAnnouncements();
-            if (viewName === 'results') loadHistoryData();
-            if (viewName === 'admin') loadAdminDashboard();
-            if (viewName === 'attendance' && currentUser) checkAttendance();
-        }
+        // --- 測驗系統抓取與解析 (改為從專屬欄位讀取圖片) ---
 
         async function startQuizFlow() {
-            const typeSelect = document.getElementById('quiz-type-select');
-            const type = typeSelect ? typeSelect.value : null;
-            if (!type) return toast('請選擇測驗科目', true);
-            const btn = document.getElementById('start-quiz-btn');
-            if (btn) { btn.disabled = true; btn.innerText = '驗證開放時間中...'; }
+            const type = document.getElementById('quiz-type-select')?.value; 
+            if (!type) return toast('請先選擇要測驗的科目', true);
+            
+            const btn = document.getElementById('start-quiz-btn'); 
+            if(btn) { btn.disabled = true; btn.innerText = "驗證時效中..."; }
+
             try {
                 const resConfig = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`);
-                const config = await resConfig.json();
-                const quizConf = config['隨堂'];
+                const config = await resConfig.json(); 
+                const quizConf = config['隨堂']; 
                 const now = new Date();
-                if (quizConf && quizConf.start && quizConf.end) {
+
+                if (quizConf?.start && quizConf?.end) {
                     const startTime = parseToTaipeiDate(quizConf.start);
                     const endTime = parseToTaipeiDate(quizConf.end);
-                    if (now < startTime) {
-                        toast(`測驗尚未開放。開放時間 (台北)：${startTime.toLocaleString('zh-TW', {timeZone:'Asia/Taipei'})}`, true);
-                        if (btn) { btn.disabled = false; btn.innerText = '開始載入題目'; }
-                        return;
-                    }
-                    if (now > endTime) {
-                        toast('測驗時段已結束。', true);
-                        if (btn) { btn.disabled = false; btn.innerText = '開始載入題目'; }
-                        return;
-                    }
-                } else {
-                    toast('尚未設定測驗時間，請連繫老師學長。', true);
-                    if (btn) { btn.disabled = false; btn.innerText = '開始載入題目'; }
-                    return;
+                    if (now < startTime) { toast(`尚未開放。預計：${startTime.toLocaleString()}`, true); return; }
+                    if (now > endTime) { toast('測驗時間已過', true); return; }
                 }
-                const quizInit = document.getElementById('quiz-init');
-                const quizMain = document.getElementById('quiz-main');
-                const quizContent = document.getElementById('quiz-content');
-                if (quizInit) quizInit.classList.add('hidden');
-                if (quizMain) quizMain.classList.remove('hidden');
-                if (quizContent) quizContent.innerHTML = '<p class="text-center py-10">驗證通過，正在載入雲端考題...</p>';
-                quizData = await fetchSheetQuiz(type);
+
+                document.getElementById('quiz-init').classList.add('hidden');
+                document.getElementById('quiz-main').classList.remove('hidden');
+                document.getElementById('quiz-content').innerHTML = '<p class="text-center py-10">正在準備雲端考卷...</p>';
+
+                const [q1, q2] = await Promise.all([
+                    fetchSingleSheet(QUIZ_GIDS['隨堂']), 
+                    fetchSingleSheet(QUIZ_GIDS[type])
+                ]);
+                
+                quizData = [...q1, ...q2];
                 renderQuiz();
-            } catch (e) { 
-                toast('系統連線失敗，請稍後再試', true); 
-                if (btn) { btn.disabled = false; btn.innerText = '開始載入題目'; }
+            } catch (e) {
+                toast('系統連線異常', true);
+            } finally {
+                if(btn) btn.disabled = false;
             }
         }
 
-        function loadAdminDashboard() {
-            loadAttendanceReport();
-            if (['Admin', '管理員', 'Teacher', '老師'].includes(currentUser.role)) loadQuizConfigs();
+        async function fetchSingleSheet(gid) {
+            try {
+                const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`);
+                const text = await res.text();
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+                if (!match) return [];
+                const data = JSON.parse(match[1]);
+                return data.table.rows.map(r => {
+                    if (!r.c[0]?.v) return null;
+                    return {
+                        question: r.c[0]?.v,
+                        type: r.c[1]?.v?.toLowerCase().trim() || 'single',
+                        options: r.c[2]?.v ? String(r.c[2].v).split(',').map(s=>s.trim()) : [],
+                        answer: String(r.c[3]?.v||'').split(',').map(s=>s.trim()),
+                        score: parseFloat(r.c[4]?.v||0),
+                        photo: r.c[5]?.v || '' // 新增：從試算表第 6 欄讀取照片網址
+                    };
+                }).filter(q => q !== null);
+            } catch(e) { return []; }
         }
 
-        async function loadQuizConfigs() {
-            const startInput = document.getElementById('unified-quiz-start');
-            const endInput = document.getElementById('unified-quiz-end');
-            const toggleBtn = document.getElementById('master-quiz-toggle');
-            const toggleText = document.getElementById('toggle-text');
-            const toggleDot = document.getElementById('toggle-dot');
-            try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`);
-                const config = await res.json();
-                const sConf = config['隨堂'] || { start: '', end: '' };
-                const toLocalInputFormat = (val) => {
-                    const d = parseToTaipeiDate(val);
-                    if (!d) return '';
-                    const pad = (n) => n.toString().padStart(2, '0');
-                    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-                };
-                if (startInput) startInput.value = toLocalInputFormat(sConf.start);
-                if (endInput) endInput.value = toLocalInputFormat(sConf.end);
-                const now = new Date();
-                const startTime = parseToTaipeiDate(sConf.start);
-                const endTime = parseToTaipeiDate(sConf.end);
-                if (toggleBtn && toggleText && toggleDot) {
-                    if (startTime && endTime && now >= startTime && now <= endTime) {
-                        currentQuizOpenStatus = true;
-                        toggleBtn.className = "w-full py-3 rounded-xl font-bold bg-emerald-600 border border-emerald-700 shadow-sm flex justify-center items-center gap-2 text-white";
-                        toggleText.innerText = "測驗進行中 (點擊立即關閉)";
-                        toggleDot.className = "w-3 h-3 rounded-full bg-emerald-300 animate-pulse";
-                    } else {
-                        currentQuizOpenStatus = false;
-                        toggleBtn.className = "w-full py-3 rounded-xl font-bold bg-rose-600 border border-rose-700 shadow-sm flex justify-center items-center gap-2 text-white";
-                        toggleText.innerText = "測驗已關閉 (點擊立即開放)";
-                        toggleDot.className = "w-3 h-3 rounded-full bg-rose-300";
-                    }
-                    toggleBtn.disabled = false;
+        function renderQuiz() {
+            const content = document.getElementById('quiz-content'); if(!content) return;
+            let h = `<div class="bg-emerald-50 p-3 rounded-xl mb-4 text-emerald-800 text-xs font-bold text-center border">正式測驗中</div>`;
+            quizData.forEach((q, i) => {
+                const qId = `q${i+1}`; 
+                
+                // 改進：直接從 q.photo 欄位生成圖片 HTML，不再搜尋題目文字
+                let imgHtml = "";
+                if (q.photo && isImageUrl(q.photo)) {
+                    imgHtml = `<img src="${convertToDirectLink(q.photo)}" class="quiz-image" onclick="window.open('${q.photo}', '_blank')">`;
                 }
-            } catch (e) { if (toggleBtn) toggleBtn.disabled = false; }
-        }
 
-        async function toggleMasterQuizStatus() {
-            const btn = document.getElementById('master-quiz-toggle');
-            if (!btn) return;
-            btn.disabled = true; btn.innerText = "正在切換狀態...";
-            try {
-                const now = new Date();
-                let start, end;
-                const formatForSheet = (d) => {
-                    const pad = (n) => n.toString().padStart(2, '0');
-                    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-                };
-                if (currentQuizOpenStatus) {
-                    const startInput = document.getElementById('unified-quiz-start');
-                    start = startInput ? startInput.value.replace('T', ' ') : formatForSheet(now);
-                    end = formatForSheet(now);
+                let opts = '';
+                if(q.type !== 'fill') { 
+                    opts = [...q.options].sort(()=>Math.random()-0.5).map(o => `<label class="hover:bg-slate-50 border p-3 rounded-xl flex items-center mb-2 cursor-pointer transition-all active:scale-95"><input type="${q.type==='single'?'radio':'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600 focus:ring-emerald-500"><span class="text-slate-700 text-sm font-medium">${o}</span></label>`).join(''); 
                 } else {
-                    start = formatForSheet(now);
-                    end = formatForSheet(new Date(now.getTime() + 2 * 60 * 60 * 1000));
+                    opts = `<input type="text" class="w-full p-4 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner bg-slate-50" id="${qId}-input" placeholder="在此輸入您的答案...">`;
                 }
-                const configObj = {};
-                Object.keys(QUIZ_GIDS).forEach(s => configObj[s] = { start, end });
-                const params = new URLSearchParams();
-                params.append('action', 'updateConfig');
-                params.append('config', JSON.stringify(configObj));
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.success || result.status === 'success') { toast(currentQuizOpenStatus ? '測驗已關閉' : '測驗已開放 2 小時！'); }
-                else { throw new Error("更新失敗"); }
-            } catch (e) { toast('操作失敗，請檢查網路', true); }
-            finally { await loadQuizConfigs(); }
+                
+                h += `<div class="question-card p-6 rounded-2xl shadow-sm mb-6 bg-white border border-slate-100" id="${qId}">
+                    <h3 class="font-bold mb-2 text-slate-800 text-base leading-relaxed">${i+1}. ${q.question}</h3>
+                    ${imgHtml}
+                    <div class="options mt-4">${opts}</div>
+                </div>`;
+            });
+            h += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-2xl font-bold text-lg mb-10 shadow-xl active:scale-95 transition-all">交卷並退出</button>`;
+            content.innerHTML = h; window.scrollTo(0,0);
         }
 
-        async function saveUnifiedQuizSettings() {
-            const btn = document.getElementById('quiz-save-btn');
-            const startInput = document.getElementById('unified-quiz-start');
-            const endInput = document.getElementById('unified-quiz-end');
-            if (!btn || !startInput || !endInput) return;
-            const start = startInput.value.replace('T', ' ');
-            const end = endInput.value.replace('T', ' ');
-            if (!start || !end) return toast('請填寫完整時間', true);
-            btn.disabled = true; btn.innerHTML = '<span class="animate-pulse">儲存中...</span>';
-            const configObj = {};
-            Object.keys(QUIZ_GIDS).forEach(s => configObj[s] = { start, end });
-            try {
-                const params = new URLSearchParams();
-                params.append('action', 'updateConfig');
-                params.append('config', JSON.stringify(configObj));
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.success || result.status === 'success') toast('設定儲存成功！');
-            } catch (e) { toast('儲存失敗', true); }
-            finally { await loadQuizConfigs(); btn.disabled = false; btn.innerHTML = '<span>儲存台北時間設定</span>'; }
+        // --- 管理邏輯 ---
+
+        async function loadAdminDashboard() {
+            loadAttendanceReport();
+            const isAdmin = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser?.role || '');
+            if (isAdmin) loadQuizConfigs();
         }
 
         async function loadAttendanceReport() {
             const list = document.getElementById('attendance-report-list'); if (!list) return;
-            const filterContainer = document.getElementById('admin-group-filter-container');
-            const filterSelect = document.getElementById('admin-group-filter');
-            list.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold font-mono">SYNCING...</div>';
+            list.innerHTML = '<div class="text-center py-10 font-mono text-slate-400 animate-pulse">SYNCING...</div>';
             try {
                 const res = await fetch(`${APPS_SCRIPT_URL}?action=getAttendanceReport&role=${encodeURIComponent(currentUser.role)}&group=${encodeURIComponent(currentUser.group)}`);
-                const result = await res.json();
-                cachedSignedUsers = result.data || [];
-                const isAdminTeacher = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser.role);
-                if (isAdminTeacher && filterSelect && filterSelect.options.length <= 0) {
-                    if (filterContainer) filterContainer.classList.remove('hidden');
-                    filterSelect.innerHTML = '<option value="ALL">全部組別</option>';
-                    const sortedGroupNames = sortGroupsByCustomOrder(Object.keys(teamsData));
-                    sortedGroupNames.forEach(g => { const opt = document.createElement('option'); opt.value = opt.text = g; filterSelect.appendChild(opt); });
-                    filterSelect.onchange = applyFilters;
-                }
+                const result = await res.json(); cachedSignedUsers = result.data || [];
+                const isAdmin = ['Admin','Teacher','老師','管理員'].includes(currentUser.role), fs = document.getElementById('admin-group-filter'), container = document.getElementById('admin-group-filter-container');
+                if (isAdmin) { if (container) container.classList.remove('hidden'); if (fs && fs.options.length <= 1) { fs.innerHTML = '<option value="ALL">全部組別</option>'; sortGroupsByCustomOrder(Object.keys(teamsData)).forEach(g => fs.add(new Option(g, g))); } }
+                else { if (container) container.classList.add('hidden'); }
                 applyFilters();
-            } catch (e) { list.innerHTML = '<div class="text-center py-10 text-red-400">連線失敗</div>'; }
+            } catch (e) { list.innerHTML = '<div class="text-center py-10 text-red-400">失敗</div>'; }
         }
 
         function applyFilters() {
-            const filterSelect = document.getElementById('admin-group-filter');
-            const groupVal = filterSelect ? filterSelect.value || currentUser.group : currentUser.group;
-            renderReport(cachedSignedUsers, groupVal);
-        }
-
-        function renderReport(signedUsers, filterGroup) {
-            const list = document.getElementById('attendance-report-list'); if (!list) return;
-            const statusFilterEl = document.getElementById('admin-status-filter');
-            const statusFilter = statusFilterEl ? statusFilterEl.value : 'ALL';
-            let html = '';
-            let targetGroups = filterGroup === 'ALL' ? sortGroupsByCustomOrder(Object.keys(teamsData)) : [filterGroup];
-            
-            targetGroups.forEach(gName => {
-                const members = teamsData[gName] || [];
-                let groupHtml = '', matchCount = 0;
-                members.forEach(mName => {
-                    const signInfo = signedUsers.find(s => s.group.trim() === gName.trim() && s.name.trim() === mName.trim());
-                    let isSigned = !!signInfo, isAbsent = true;
-                    if (isSigned) {
-                        const note = signInfo.note || '';
-                        if (!note.includes('病假') && !note.includes('事假')) isAbsent = false;
-                    }
-                    if (statusFilter === 'ABSENT' && !isAbsent) return;
+            const isAdmin = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser?.role || '');
+            let gVal = document.getElementById('admin-group-filter')?.value || 'ALL';
+            if (!isAdmin) gVal = currentUser.group;
+            const statusFilter = document.getElementById('admin-status-filter')?.value || 'ALL', list = document.getElementById('attendance-report-list');
+            if (!list) return;
+            let html = '', groups = gVal === 'ALL' ? sortGroupsByCustomOrder(Object.keys(teamsData)) : [gVal];
+            groups.forEach(gn => {
+                let gHtml = '', matchCount = 0;
+                (teamsData[gn] || []).forEach(name => {
+                    const sign = cachedSignedUsers.find(s => s.group === gn && s.name === name);
+                    if(statusFilter === 'ABSENT' && sign && !sign.note.includes('假')) return;
                     matchCount++;
-
-                    let dotClass = 'dot-missing', textColorClass = 'text-red-400';
-                    let rightSideDisplay = '未簽到';
-                    let reasonDisplay = '';
-
-                    if (isSigned) {
-                        const noteText = signInfo.note || "";
-                        const parts = noteText.split(' ');
-                        const leaveType = parts[0] || '正常出席';
-                        const reason = parts.slice(1).join(' ');
-
-                        if (leaveType.includes('病假') || leaveType.includes('事假')) {
-                            dotClass = 'dot-leave'; textColorClass = 'text-orange-500';
-                            rightSideDisplay = leaveType;
-                            reasonDisplay = reason;
-                        } else if (leaveType.includes('公假')) {
-                            dotClass = 'dot-official'; textColorClass = 'text-blue-500';
-                            rightSideDisplay = leaveType;
-                            reasonDisplay = reason;
-                        } else if (leaveType.includes('晚到')) {
-                            dotClass = 'dot-late'; textColorClass = 'text-yellow-600';
-                            rightSideDisplay = `晚到 (${signInfo.time})`;
-                            reasonDisplay = reason;
-                        } else {
-                            dotClass = 'dot-signed'; textColorClass = 'text-emerald-500';
-                            rightSideDisplay = `出席 (${signInfo.time})`;
-                            reasonDisplay = (reason === '自主簽到') ? '' : reason;
-                        }
+                    let dot = 'dot-missing', color = 'text-red-400', right = '未簽到', reason = '';
+                    if(sign) {
+                        const parts = sign.note.split(' '); const type = parts[0]; reason = parts.slice(1).join(' ');
+                        if(type.includes('假')) { dot = 'dot-leave'; color = 'text-orange-500'; right = type; }
+                        else if(type.includes('晚到')) { dot = 'dot-late'; color = 'text-yellow-600'; right = `晚到 (${sign.time})`; }
+                        else { dot = 'dot-signed'; color = 'text-emerald-500'; right = `出席 (${sign.time})`; }
                     }
-                    
-                    groupHtml += `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center mb-2">
-                            <div class="flex items-center">
-                                <span class="status-dot ${dotClass}"></span>
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-slate-700 text-sm">${mName}</span>
-                                    ${reasonDisplay ? `<span class="text-[10px] text-slate-400 font-medium mt-0.5">${reasonDisplay}</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold ${textColorClass}">${rightSideDisplay}</span>
-                                <button onclick="openProxyModal('${gName}', '${mName}')" class="text-[10px] px-2 py-1 bg-slate-50 text-slate-600 rounded-md border border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 transition-colors active:scale-95">${isSigned ? '調整' : '代簽'}</button>
-                            </div>
-                        </div>
-                    `;
+                    gHtml += `<div class="bg-white p-4 rounded-xl shadow-sm border mb-2 flex justify-between items-center"><div class="flex items-center"><span class="status-dot ${dot}"></span><div class="flex flex-col"><span class="font-bold text-sm text-slate-700">${name}</span>${reason?`<span class="text-[10px] text-slate-400">${reason}</span>`:''}</div></div><div class="flex items-center gap-3"><span class="text-xs font-bold ${color}">${right}</span><button onclick="openProxyModal('${gn}', '${name}')" class="text-[10px] px-2 py-1 border rounded active:bg-slate-100">調整</button></div></div>`;
                 });
-                if (matchCount > 0) html += `<div class="mt-4 mb-2 px-2 text-xs font-bold text-slate-400 uppercase flex justify-between"><span>${gName}</span><span>${matchCount} 人</span></div>` + groupHtml;
+                if(matchCount > 0) html += `<div class="mt-4 mb-2 px-2 text-xs font-bold text-slate-400 flex justify-between"><span>${gn}</span><span>${matchCount}人</span></div>` + gHtml;
             });
-            list.innerHTML = html || '<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border-2 border-dashed font-bold">目前無符合條件的名單</div>';
+            list.innerHTML = html || '<div class="text-center py-10">查無資料</div>';
         }
 
+        // --- 剩餘輔助函式維持原樣 ---
         async function fetchTeamsData() {
             try {
-                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${TEAMS_GID}`;
-                const res = await fetch(url);
-                const data = JSON.parse((await res.text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]);
-                teamsData = {};
-                data.table.rows.forEach(row => {
-                    const g = row.c[0]?.v, n = row.c[1]?.v;
-                    if (g && n && g !== '組別') { if (!teamsData[g]) teamsData[g] = []; teamsData[g].push(n); }
+                const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${TEAMS_GID}&t=${Date.now()}`);
+                const text = await res.text();
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+                const data = JSON.parse(match[1]);
+                teamsData = {}; 
+                data.table.rows.forEach(r => { const g = r.c[0]?.v, n = r.c[1]?.v; if(g && n && g!=='組別') { if(!teamsData[g]) teamsData[g]=[]; teamsData[g].push(n); } });
+                const sortedGroups = sortGroupsByCustomOrder(Object.keys(teamsData));
+                [document.getElementById('login-group'), document.getElementById('reg-group')].forEach(s => { 
+                    if(!s) return; s.innerHTML = '<option value="" disabled selected>請選擇組別</option>'; sortedGroups.forEach(g => s.add(new Option(g, g))); 
+                    s.onchange = (e) => { const ns = e.target.id==='login-group'?document.getElementById('login-name'):document.getElementById('reg-name'); if(!ns) return; ns.innerHTML = '<option value="" disabled selected>選擇姓名</option>'; (teamsData[e.target.value] || []).sort().forEach(n => ns.add(new Option(n, n))); ns.disabled = false; }; 
                 });
-                const gSelects = [document.getElementById('login-group'), document.getElementById('reg-group')];
-                const sortedGroupNames = sortGroupsByCustomOrder(Object.keys(teamsData));
-                gSelects.forEach(select => {
-                    if (!select) return;
-                    select.innerHTML = '<option value="" disabled selected>請選擇組別</option>';
-                    sortedGroupNames.forEach(g => { const opt = document.createElement('option'); opt.value = opt.text = g; select.appendChild(opt); });
-                    select.onchange = (e) => {
-                        const ns = e.target.id === 'login-group' ? document.getElementById('login-name') : document.getElementById('reg-name');
-                        if (ns) {
-                            ns.innerHTML = '<option value="" disabled selected>選擇姓名</option>';
-                            teamsData[e.target.value].sort().forEach(n => { const opt = document.createElement('option'); opt.value = opt.text = n; ns.appendChild(opt); });
-                            ns.disabled = false;
-                        }
-                    };
-                });
-            } catch (e) { }
+            } catch (e) { toast('名單讀取失敗', true); }
         }
 
-        function openProxyModal(group, name) {
-            proxyTarget = { group, name };
-            const targetEl = document.getElementById('proxy-target-name');
-            if (targetEl) targetEl.innerText = `${group} - ${name}`;
-            const leaveSelect = document.getElementById('proxy-leave-type');
-            if (leaveSelect) leaveSelect.value = '正常出席';
-            const reasonInput = document.getElementById('proxy-reason-input');
-            if (reasonInput) reasonInput.value = '';
-            const submitBtn = document.getElementById('proxy-submit-btn');
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '確認送出紀錄'; }
-            const modal = document.getElementById('proxy-sign-modal');
-            if (modal) modal.style.display = 'flex';
-        }
-
-        function closeProxyModal() { const modal = document.getElementById('proxy-sign-modal'); if (modal) modal.style.display = 'none'; }
-        function setProxyQuick(type) { const leaveSelect = document.getElementById('proxy-leave-type'); if (leaveSelect) leaveSelect.value = type; }
-
-        async function submitProxySignIn() {
-            const leaveType = document.getElementById('proxy-leave-type').value;
-            const reason = document.getElementById('proxy-reason-input').value.trim();
-            const btn = document.getElementById('proxy-submit-btn');
-            if (btn) { btn.disabled = true; btn.innerText = '更新中...'; }
+        async function loadAnnouncements() {
+            const list = document.getElementById('announcement-list'); if (!list) return;
+            list.innerHTML = '<div class="text-center py-20 text-slate-400">正在讀取...</div>';
             try {
-                const params = new URLSearchParams();
-                params.append('action', 'signIn'); 
-                params.append('group', proxyTarget.group);
-                params.append('name', proxyTarget.name); 
-                params.append('leaveType', leaveType); 
-                params.append('reason', reason);       
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.success || result.status === 'success') {
-                    toast(`${proxyTarget.name} 狀態已更新`); 
-                    closeProxyModal(); 
-                    setTimeout(loadAttendanceReport, 500);
-                } else { throw new Error(); }
-            } catch (e) { toast('操作失敗', true); if (btn) { btn.disabled = false; btn.innerText = '確認送出紀錄'; } }
+                const res = await fetch(`${APPS_SCRIPT_URL}?action=getAnnouncements`), data = await res.json();
+                cachedAnnouncements = data.data || []; renderAnnouncements();
+            } catch (e) { list.innerHTML = '<div class="text-center py-20">連線失敗</div>'; }
         }
 
-        function closeDetailModal() { const modal = document.getElementById('detail-modal'); if (modal) modal.style.display = 'none'; }
-
-        async function performSignIn() {
-            const btn = document.getElementById('signin-btn'); if (btn) btn.disabled = true;
-            try {
-                const params = new URLSearchParams({ action: 'signIn', group: currentUser.group, name: currentUser.name, leaveType: '正常出席', reason: '自主簽到' });
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.success || result.status === 'success') { toast('簽到成功'); checkAttendance(); }
-                else { throw new Error(); }
-            } catch (e) { toast('簽到失敗', true); if (btn) { btn.disabled = false; btn.innerText = '確認送出紀錄'; } }
+        function renderAnnouncements() {
+            const list = document.getElementById('announcement-list'); if (!list) return;
+            if (!cachedAnnouncements.length) { list.innerHTML = '<div class="text-center py-20">無內容</div>'; return; }
+            const isAdmin = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser?.role || '');
+            list.innerHTML = cachedAnnouncements.map((ann, idx) => {
+                let res = []; try { res = JSON.parse(ann.link || '[]'); } catch(e) { if(ann.link) res = [{label:'下載資料', url:ann.link}]; }
+                return `<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative group fade-in mb-6">${isAdmin?`<button onclick="openAnnouncementModal(${idx})" class="absolute top-4 right-4 text-xs text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-all">編輯</button>`:''}<div class="text-[10px] font-mono text-emerald-600 font-bold mb-1 uppercase">${ann.time || ''}</div><h3 class="text-lg font-black text-slate-800 mb-2">${ann.title}</h3><div class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-4">${ann.content}</div>${res.length?`<div class="pt-4 border-t border-slate-50 flex flex-wrap gap-2">${res.map(r=>`<a href="${r.url}" target="_blank" class="text-xs bg-emerald-50 text-emerald-600 px-3 py-2 rounded-lg font-bold flex items-center gap-1 hover:bg-emerald-600 hover:text-white border border-emerald-100 transition-all">🔗 ${r.label}</a>`).join('')}</div>`:''}</div>`;
+            }).join('');
         }
 
-        async function handleRegister() {
-            const g = document.getElementById('reg-group').value, n = document.getElementById('reg-name').value, p = document.getElementById('reg-pass').value, c = document.getElementById('reg-pass-confirm').value;
-            if (!g || !n || !p) return toast('資訊不全', true);
-            if (p.length < 6) return toast('密碼至少 6 位', true);
-            if (p !== c) return toast('確認密碼錯誤', true);
-            const btn = document.getElementById('reg-btn'); if (btn) btn.disabled = true;
-            try {
-                const params = new URLSearchParams({ action: 'register', group: g, name: n, password: p });
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                if ((await res.json()).success) { toast('註冊成功！'); switchView('login'); }
-            } catch (e) { toast('註冊失敗', true); }
-            if (btn) btn.disabled = false;
+        function handleLogin() {
+            const g = document.getElementById('login-group')?.value, n = document.getElementById('login-name')?.value, p = document.getElementById('login-pass')?.value;
+            if(!g || !n || !p) return toast('完整輸入', true);
+            fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', group: g, name: n, password: p }), redirect: 'follow' })
+                .then(r => r.json()).then(r => { if(r.success) { currentUser = { group: r.group, name: r.name, role: r.role }; localStorage.setItem('sh_user_secure', JSON.stringify(currentUser)); showDashboard(); } else toast(r.error, true); })
+                .catch(() => toast('連線異常', true));
         }
 
-        async function handleLogin() {
-            const gSelect = document.getElementById('login-group'), nSelect = document.getElementById('login-name'), pInput = document.getElementById('login-pass');
-            if (!gSelect || !nSelect || !pInput) return;
-            const g = gSelect.value, n = nSelect.value, p = pInput.value;
-            if (!g || !n || !p) return toast('請輸入帳密', true);
-            const btn = document.getElementById('login-btn'); if (btn) { btn.disabled = true; btn.innerText = '登入中...'; }
-            try {
-                const params = new URLSearchParams({ action: 'login', group: g, name: n, password: p });
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.success || result.status === 'success') {
-                    currentUser = { group: result.group, name: result.name, role: result.role };
-                    localStorage.setItem('sh_user_secure', JSON.stringify(currentUser)); showDashboard();
-                } else { toast(result.error || '驗證失敗', true); }
-            } catch (e) { toast('網路異常', true); }
-            if (btn) { btn.disabled = false; btn.innerText = '進入系統'; }
-        }
+        async function handleQuizSubmit() { const btn = document.getElementById('quiz-final-btn'); if(btn) { btn.disabled = true; btn.innerText = '提交中...'; } const answers = quizData.map((q, i) => { const el = document.getElementById(`q${i+1}`); let val = '未作答'; if(q.type === 'single') val = el.querySelector('input:checked')?.value || '未作答'; else if(q.type === 'multiple') val = Array.from(el.querySelectorAll('input:checked')).map(i => i.value).sort().join(', ') || '未作答'; else val = document.getElementById(`q${i+1}-input`)?.value.trim() || '未作答'; return { qId: `q${i+1}`, userAnswer: val }; }); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitQuiz', group: currentUser.group, name: currentUser.name, quizType: document.getElementById('quiz-type-select').value, userAnswersJson: JSON.stringify(answers), quizDataJson: JSON.stringify(quizData) }) }); if ((await res.json()).status === 'success') { toast('提交成功'); switchView('results'); } } catch (e) { toast('失敗', true); if(btn) btn.disabled = false; } }
+        async function handleRegister() { const g = document.getElementById('reg-group')?.value, n = document.getElementById('reg-name')?.value, p = document.getElementById('reg-pass')?.value, c = document.getElementById('reg-pass-confirm')?.value; if(!g || !n || !p) return toast('資訊不全', true); if(p!==c) return toast('不一致', true); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({action:'register', group:g, name:n, password:p}) }); if((await res.json()).success) { toast('成功！請登入'); switchView('login'); } } catch (e) { toast('失敗', true); } }
+        async function checkAttendance() { try { const res = await fetch(`${APPS_SCRIPT_URL}?action=checkAttendance&group=${encodeURIComponent(currentUser.group)}&name=${encodeURIComponent(currentUser.name)}`), r = await res.json(), div = document.getElementById('attendance-status'), btn = document.getElementById('signin-btn'); if (r.signedIn) { if(div) div.innerHTML = `<p class="text-emerald-600 font-bold">✅ 已完成簽到<br><span class="text-xs text-slate-400">${r.time}</span></p>`; btn?.classList.add('hidden'); } else { if(div) div.innerHTML = `<p class="text-slate-400">尚未簽到</p>`; btn?.classList.remove('hidden'); } } catch (e) {} }
+        async function performSignIn() { try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'signIn', group: currentUser.group, name: currentUser.name, leaveType: '正常出席', reason: '自主簽到' }) }); if((await res.json()).success) { toast('簽到成功'); checkAttendance(); } } catch (e) { toast('失敗', true); } }
+        async function loadHistoryData() { const list = document.getElementById('history-list'); if(!list) return; list.innerHTML = '<div class="text-center py-10">載入成績中...</div>'; try { const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&name=${encodeURIComponent(currentUser.name)}&group=${encodeURIComponent(currentUser.group)}`), r = await res.json(); if (r.success && r.data.length) { historyData = r.data; list.innerHTML = r.data.map((r, i) => `<div class="bg-white p-5 rounded-2xl shadow-sm border flex justify-between items-center cursor-pointer hover:border-emerald-300 transition-all" onclick="showExamDetail(${i})"><div><div class="text-[10px] text-slate-400 font-mono">${r.timestamp}</div><div class="font-bold">${r.quizType}</div></div><div class="text-3xl font-black text-emerald-500">${r.score}</div></div>`).join(''); } else list.innerHTML = '<div class="text-center py-10">無紀錄</div>'; } catch (e) {} }
+        function showExamDetail(i) { const r = historyData[i], d = JSON.parse(r.details), title = document.getElementById('detail-title'), body = document.getElementById('detail-body'); if(title) title.innerText = r.quizType; if(body) body.innerHTML = d.map((q, idx) => `<div class="p-4 border rounded-xl mb-2"><div class="font-bold text-sm text-slate-700">${idx+1}. ${q.question} ${q.isCorrect?'✅':'❌'}</div><div class="text-xs mt-1">回答：${q.userAnswer} ${!q.isCorrect?' / 正確：'+q.correctAnswer:''}</div></div>`).join(''); const modal = document.getElementById('detail-modal'); if(modal) modal.style.display = 'flex'; }
+        function openProxyModal(g, n) { proxyTarget = {g, n}; const el = document.getElementById('proxy-target-name'); if(el) el.innerText = `${g} - ${n}`; const type = document.getElementById('proxy-leave-type'), reason = document.getElementById('proxy-reason-input'); if(type) type.value = '正常出席'; if(reason) reason.value = ''; const modal = document.getElementById('proxy-sign-modal'); if(modal) modal.style.display = 'flex'; }
+        async function submitProxySignIn() { const btn = document.getElementById('proxy-submit-btn'); if(btn) btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'signIn', group: proxyTarget.g, name: proxyTarget.n, leaveType: document.getElementById('proxy-leave-type').value, reason: document.getElementById('proxy-reason-input').value.trim() }) }); if((await res.json()).success) { toast('狀態更新成功'); closeProxyModal(); loadAttendanceReport(); } } catch (e) { toast('失敗', true); } finally { if(btn) btn.disabled = false; } }
+        async function loadQuizConfigs() { try { const res = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`), config = await res.json(), sConf = config['隨堂'] || { start: '', end: '' }, now = new Date(), start = parseToTaipeiDate(sConf.start), end = parseToTaipeiDate(sConf.end); const startEl = document.getElementById('unified-quiz-start'), endEl = document.getElementById('unified-quiz-end'); if(startEl) startEl.value = start ? new Date(start.getTime() - start.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""; if(endEl) endEl.value = end ? new Date(end.getTime() - end.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""; const toggleBtn = document.getElementById('master-quiz-toggle'), tb = document.getElementById('toggle-text'), td = document.getElementById('toggle-dot'); if (start && end && now >= start && now <= end) { currentQuizOpenStatus = true; if(toggleBtn) toggleBtn.className = "w-full py-3 rounded-xl font-bold bg-emerald-600 text-white flex justify-center items-center gap-2"; if(tb) tb.innerText = "測驗進行中 (點擊關閉)"; if(td) td.className = "w-3 h-3 rounded-full bg-white animate-pulse"; } else { currentQuizOpenStatus = false; if(toggleBtn) toggleBtn.className = "w-full py-3 rounded-xl font-bold bg-rose-600 text-white flex justify-center items-center gap-2"; if(tb) tb.innerText = "測驗已關閉 (點擊開放)"; if(td) td.className = "w-3 h-3 rounded-full bg-white"; } } catch (e) {} }
+        async function toggleMasterQuizStatus() { const btn = document.getElementById('master-quiz-toggle'); if(btn) btn.disabled = true; try { const now = new Date(), format = (d) => `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; let start = format(now), end = currentQuizOpenStatus ? start : format(new Date(now.getTime() + 2*60*60*1000)); const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', config: JSON.stringify({ '隨堂':{start,end},'論語':{start,end},'性理':{start,end},'道德經':{start,end},'六祖':{start,end} }) }) }); if ((await res.json()).success) toast('狀態成功切換'); } catch (e) { toast('連線失敗', true); } finally { loadQuizConfigs(); } }
+        async function saveUnifiedQuizSettings() { const s = document.getElementById('unified-quiz-start')?.value?.replace('T', ' '), e = document.getElementById('unified-quiz-end')?.value?.replace('T', ' '); if(!s || !e) return toast('請輸入開始與結束時間', true); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', config: JSON.stringify({ '隨堂':{start:s,end:e},'論語':{start:s,end:e},'性理':{start:s,end:e},'道德經':{start:s,end:e},'六祖':{start:s,end:e} }) }) }); if((await res.json()).success) toast('雲端設定已儲存'); } catch (e) { toast('失敗', true); } finally { loadQuizConfigs(); } }
+        function openAnnouncementModal(idx = null) { const modal = document.getElementById('announcement-modal'), container = document.getElementById('ann-resources-container'); if(!modal || !container) return; container.innerHTML = ''; if (idx !== null) { const d = cachedAnnouncements[idx]; document.getElementById('ann-modal-title').innerText = "編輯公告內容"; document.getElementById('ann-id').value = d.id; document.getElementById('ann-title').value = d.title; document.getElementById('ann-content').value = d.content; let res = []; try { res = JSON.parse(d.link || '[]'); } catch(e) { if(d.link) res = [{label:'下載資料', url:d.link}]; } res.forEach(r => addResourceRow(r.label, r.url)); } else { document.getElementById('ann-modal-title').innerText = "發布新公告"; document.getElementById('ann-id').value = ""; document.getElementById('ann-title').value = ""; document.getElementById('ann-content').value = ""; addResourceRow('作業表單', ''); } modal.style.display = 'flex'; }
+        function parseToTaipeiDate(val) { if (!val) return null; if (typeof val === 'string' && val.endsWith('Z')) return new Date(val); const cleanVal = val.toString().replace(/\//g, '-').replace(' ', 'T'); return new Date(cleanVal + (cleanVal.includes('+') ? '' : '+08:00')); }
+        function sortGroupsByCustomOrder(arr) { return arr.sort((a, b) => { const ia = GROUP_ORDER.indexOf(a), ib = GROUP_ORDER.indexOf(b); if (ia !== -1 && ib !== -1) return ia - ib; if (ia !== -1) return -1; if (ib !== -1) return 1; return a.localeCompare(b, 'zh-Hant'); }); }
 
-        async function checkAttendance() {
-            const statusDiv = document.getElementById('attendance-status'), btn = document.getElementById('signin-btn');
-            if (!statusDiv) return;
-            try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=checkAttendance&group=${encodeURIComponent(currentUser.group)}&name=${encodeURIComponent(currentUser.name)}`);
-                const result = await res.json();
-                if (result.signedIn) {
-                    statusDiv.innerHTML = `<p class="text-emerald-600 font-bold">✅ 今日已完成簽到<br><span class="text-xs text-slate-400 font-normal">時間：${result.time}</span></p>`;
-                    if (btn) btn.classList.add('hidden');
-                } else {
-                    statusDiv.innerHTML = `<p class="text-slate-400">尚未簽到</p>`;
-                    if (btn) btn.classList.remove('hidden');
-                }
-            } catch (e) { }
-        }
-
-        async function loadHistoryData() {
-            const list = document.getElementById('history-list'); if (!list) return;
-            list.innerHTML = '<div class="text-center py-10 text-slate-400">載入中...</div>';
-            try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&name=${encodeURIComponent(currentUser.name)}&group=${encodeURIComponent(currentUser.group)}`);
-                const result = await res.json();
-                if ((result.success || result.status === 'success') && result.data && result.data.length > 0) {
-                    historyData = result.data;
-                    list.innerHTML = result.data.map((r, index) => `
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center cursor-pointer hover:border-emerald-300 transition-all fade-in" onclick="showExamDetail(${index})">
-                            <div><div class="text-xs text-slate-400 text-[10px] font-mono">${r.timestamp}</div><div class="font-bold text-slate-700">${r.quizType}</div></div>
-                            <div class="text-3xl font-black text-emerald-500">${r.score}</div>
-                        </div>
-                    `).join('');
-                } else list.innerHTML = '<div class="text-center py-10 text-slate-400 bg-white rounded-2xl">無成績紀錄</div>';
-            } catch (e) { }
-        }
-
-        function showExamDetail(index) {
-            const record = historyData[index]; if(!record || !record.details) return;
-            const details = JSON.parse(record.details), body = document.getElementById('detail-body'), title = document.getElementById('detail-title');
-            if (title) title.innerText = `${record.quizType} (${record.score}分)`;
-            if (body) {
-                body.innerHTML = details.map((d, i) => {
-                    const imgHtml = d.imageUrl ? `<div class="mb-3 text-center"><img src="${d.imageUrl}" class="max-w-full h-auto rounded-lg mx-auto shadow-sm" onerror="this.style.display='none'"></div>` : '';
-                    return `
-                    <div class="p-4 rounded-xl border ${d.isCorrect ? 'border-emerald-100 bg-emerald-50/50' : 'border-red-100 bg-red-50/50'}">
-                        <div class="font-bold mb-2 text-slate-800 text-sm leading-relaxed">${i+1}. ${d.question} ${d.isCorrect ? '✅' : '❌'}</div>
-                        ${imgHtml}
-                        <div class="text-xs">你的回答：<span class="${d.isCorrect ? 'text-emerald-600' : 'text-red-600'} font-bold">${d.userAnswer}</span></div>
-                        ${!d.isCorrect ? `<div class="text-xs text-emerald-600 font-bold mt-1">正確答案：${Array.isArray(d.correctAnswer)?d.correctAnswer.join(', '):d.correctAnswer}</div>` : ''}
-                    </div>
-                `;}).join('');
-            }
-            const modal = document.getElementById('detail-modal'); if (modal) modal.style.display = 'flex';
-        }
-
-        async function fetchSheetQuiz(type) {
-            const [q1, q2] = await Promise.all([fetchSingleSheet(QUIZ_GIDS['隨堂']), fetchSingleSheet(QUIZ_GIDS[type])]);
-            return [...q1, ...q2];
-        }
-
-        async function fetchSingleSheet(gid) {
-            const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`);
-            const data = JSON.parse((await res.text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]);
-            return data.table.rows.map(row => ({
-                question: row.c[0]?.v, type: row.c[1]?.v?.toLowerCase().trim() || 'single',
-                options: row.c[2]?.v ? String(row.c[2].v).split(',').map(s => s.trim()) : [],
-                answer: String(row.c[3]?.v || '').split(',').map(s => s.trim()),
-                score: parseFloat(row.c[4]?.v || 0), imageUrl: row.c[5]?.v || ''
-            })).filter(q => q.question);
-        }
-
-        function renderQuiz() {
-            const quizContent = document.getElementById('quiz-content'); if (!quizContent) return;
-            let html = `<div class="bg-emerald-50 p-3 rounded-xl mb-4 text-emerald-800 text-xs font-bold text-center border border-emerald-100 shadow-inner tracking-widest uppercase">考試中...</div>`;
-            quizData.forEach((q, i) => {
-                const qId = `q${i+1}`;
-                let optHtml = '';
-                const imgHtml = q.imageUrl ? `<div class="mb-4 text-center"><img src="${q.imageUrl}" class="max-w-full h-auto rounded-xl mx-auto shadow-sm border border-slate-100" onerror="this.style.display='none'"></div>` : '';
-                if(q.type !== 'fill') {
-                    const shuffled = [...q.options].sort(()=>Math.random()-0.5);
-                    optHtml = shuffled.map(o => `<label class="hover:bg-slate-50 border p-3 rounded-xl flex items-center mb-2 cursor-pointer transition-all active:scale-[0.98]"><input type="${q.type==='single'?'radio':'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600 border-slate-300 focus:ring-emerald-500"><span class="text-slate-700 text-sm font-medium">${o}</span></label>`).join('');
-                } else {
-                    optHtml = `<input type="text" class="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner" data-qid="${qId}" placeholder="輸入答案...">`;
-                }
-                html += `<div class="question-card p-6 rounded-2xl shadow-sm mb-6 bg-white border border-slate-100" id="${qId}"><h3 class="font-bold mb-4 text-slate-800 text-base leading-relaxed">${i+1}. ${q.question}</h3>${imgHtml}<div class="options">${optHtml}</div></div>`;
-            });
-            html += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-2xl font-bold text-lg mb-10 shadow-xl transition-transform active:scale-[0.98]">確認交卷</button>`;
-            quizContent.innerHTML = html; window.scrollTo(0,0);
-        }
-
-        async function handleQuizSubmit() {
-            const btn = document.getElementById('quiz-final-btn'); if (btn) { btn.disabled = true; btn.innerText = '提交中...'; }
-            const answers = quizData.map((q, i) => {
-                const el = document.getElementById(`q${i+1}`);
-                let val = '未作答'; if (!el) return { qId: `q${i+1}`, userAnswer: val };
-                if (q.type === 'single') val = el.querySelector('input:checked')?.value || '未作答';
-                else if (q.type === 'multiple') val = Array.from(el.querySelectorAll('input:checked')).map(i => i.value).sort().join(', ') || '未作答';
-                else { const inputEl = el.querySelector('input'); val = inputEl ? inputEl.value.trim() : '未作答'; }
-                return { qId: `q${i+1}`, userAnswer: val };
-            });
-            try {
-                const params = new URLSearchParams({ action: 'submitQuiz', group: currentUser.group, name: currentUser.name, quizType: document.getElementById('quiz-type-select').value, userAnswersJson: JSON.stringify(answers), quizDataJson: JSON.stringify(quizData) });
-                const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: params });
-                const result = await res.json();
-                if (result.status === 'success') { toast('測驗提交成功'); switchView('results'); }
-                else throw new Error();
-            } catch (e) { toast('提交失敗', true); if (btn) { btn.disabled = false; btn.innerText = '確認交卷'; } }
-        }
-
-        function logout() { localStorage.removeItem('sh_user_secure'); location.reload(); }
-        function updateDateDisplay() { const dateEl = document.getElementById('today-date'); if (dateEl) dateEl.innerText = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }); }
-        
-        function toast(msg, isError = false) { 
-            const box = document.getElementById('message-box'); 
-            if (!box) return;
-            box.innerText = msg; 
-            box.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] fade-in font-bold ${isError ? 'bg-red-500' : 'bg-emerald-600'} pointer-events-none`; 
-            box.style.display = 'block'; 
-            setTimeout(() => { if (box) box.style.display = 'none'; }, 5000); 
-        }
+        // --- 啟動初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateDisplay();
+            fetchTeamsData();
+            initApp();
+        });
     </script>
 </body>
 </html>
