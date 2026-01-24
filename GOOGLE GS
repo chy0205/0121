@@ -1,0 +1,325 @@
+/**
+ * 崇華十六期整合管理系統 - GAS 後端主程式 (完整整合版)
+ * 功能：登入註冊、動態分頁簽到、測驗提交(含加分題邏輯)、公告系統、檔案上傳
+ */
+
+const SPREADSHEET_ID = '1u3D7u5hn7dcVGgGxmNBm233B_sz16kPuUcncvCnNr6U';
+
+/**
+ * 處理 GET 請求：用於讀取資料
+ */
+function doGet(e) {
+  const action = e.parameter.action;
+  const name = e.parameter.name;
+  const group = e.parameter.group;
+  const role = e.parameter.role;
+  
+  try {
+    if (action === 'getHistory') return JSONResponse(getHistory(group, name));
+    if (action === 'getConfig') return JSONResponse(handleGetConfig());
+    if (action === 'checkAttendance') return JSONResponse(checkAttendanceStatus(group, name));
+    if (action === 'getAttendanceReport') return JSONResponse(getAttendanceReport(role, group));
+    if (action === 'getAnnouncements') return JSONResponse(getAnnouncements());
+    throw new Error("未定義的讀取動作");
+  } catch (err) {
+    return JSONResponse({ success: false, error: err.toString() });
+  }
+}
+
+/**
+ * 處理 POST 請求：用於寫入資料
+ */
+function doPost(e) {
+  let params;
+  try {
+    if (e.postData && e.postData.contents) {
+      params = JSON.parse(e.postData.contents);
+    } else {
+      params = e.parameter;
+    }
+  } catch (err) { params = e.parameter; }
+
+  const action = params.action;
+  try {
+    switch (action) {
+      case 'register': return JSONResponse(handleRegister(params));
+      case 'login': return JSONResponse(handleLogin(params));
+      case 'signIn': return JSONResponse(handleSignIn(params));
+      case 'submitQuiz': return JSONResponse(handleSubmitQuiz(params));
+      case 'updateConfig': return JSONResponse(handleUpdateConfig(params.config));
+      case 'updateAnnouncement': return JSONResponse(updateAnnouncement(params));
+      case 'uploadFile': return JSONResponse(handleFileUpload(params));
+      default: throw new Error("未定義的寫入動作: " + action);
+    }
+  } catch (err) {
+    return JSONResponse({ success: false, error: err.message || err.toString() });
+  }
+}
+
+/**
+ * 統一格式化 JSON 回傳
+ */
+function JSONResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ==========================================
+// 1. 公告與檔案系統
+// ==========================================
+
+function getAnnouncements() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName('Bulletin') || ss.insertSheet('Bulletin');
+  if (sheet.getLastRow() < 1) {
+    sheet.appendRow(['時間', '標題', '內容', '資源JSON', 'Visible']);
+    return { success: true, data: [] };
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: true, data: [] };
+  
+  data.shift(); // 移除標題列
+  const list = data.map((row, idx) => ({
+    id: idx + 2, 
+    time: row[0] instanceof Date ? Utilities.formatDate(row[0], "GMT+8", "yyyy/MM/dd HH:mm") : row[0],
+    title: row[1],
+    content: row[2],
+    link: row[3],
+    visible: row[4] || 'Y'
+  })).reverse();
+  
+  return { success: true, data: list };
+}
+
+function updateAnnouncement(params) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName('Bulletin') || ss.insertSheet('Bulletin');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['時間', '標題', '內容', '資源JSON', 'Visible']);
+  
+  const now = new Date();
+  if (params.id && params.id !== "") {
+    const row = parseInt(params.id);
+    sheet.getRange(row, 1, 1, 5).setValues([[now, params.title, params.content, params.link, params.visible || 'Y']]);
+  } else {
+    sheet.appendRow([now, params.title, params.content, params.link, params.visible || 'Y']);
+  }
+  return { success: true };
+}
+
+function handleFileUpload(params) {
+  const folderName = "崇華十六期公告附件";
+  let folders = DriveApp.getFoldersByName(folderName);
+  let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  
+  const data = Utilities.base64Decode(params.base64Data);
+  const blob = Utilities.newBlob(data, params.mimeType, params.fileName);
+  const file = folder.createFile(blob);
+  
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return { success: true, url: file.getUrl(), fileId: file.getId() };
+}
+
+// ==========================================
+// 2. 測驗與成績詳解 (加分題處理：有寫就給分，但保存正確答案)
+// ==========================================
+
+function handleSubmitQuiz(params) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const monthStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy/MM");
+  const sheetName = '結果' + monthStr;
+  let sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+  
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Timestamp', 'Group', 'Name', 'Subject', 'TotalScore', 'Details']);
+  }
+  
+  const userAnswers = JSON.parse(params.userAnswersJson);
+  const quizData = JSON.parse(params.quizDataJson);
+  let totalScore = 0;
+  let detailRecords = [];
+  
+  quizData.forEach((q, i) => {
+    const uAns = userAnswers[i].userAnswer;
+    const isBonus = userAnswers[i].isBonus; // 根據前端傳回的 G 欄判定
+    const correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
+    const correctStr = correctAnswers.join(', ');
+    
+    let isCorrect = false;
+    
+    if (isBonus) {
+      // 加分題邏輯：只要作答內容不是「未作答」且非空白，就判定正確
+      if (uAns && uAns !== '未作答' && uAns.toString().trim() !== '') {
+        isCorrect = true;
+      }
+    } else {
+      // 一般題比對邏輯 (不分大小寫、去空格)
+      isCorrect = correctAnswers.some(a => a.toString().trim().toLowerCase() === uAns.toString().trim().toLowerCase());
+    }
+    
+    if (isCorrect) totalScore += q.score;
+    
+    detailRecords.push({
+      question: q.question,
+      userAnswer: uAns,
+      correctAnswer: correctStr, // 詳解保留正確答案
+      isCorrect: isCorrect,
+      photo: q.photo || '',
+      isBonus: isBonus
+    });
+  });
+  
+  sheet.appendRow([
+    new Date(), 
+    params.group, 
+    params.name, 
+    params.quizType, 
+    totalScore, 
+    JSON.stringify(detailRecords)
+  ]);
+  
+  return { status: 'success', score: totalScore };
+}
+
+function getHistory(group, name) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const history = [];
+  ss.getSheets().forEach(s => {
+    if (s.getName().indexOf('結果') === 0) {
+      const rows = s.getDataRange().getValues();
+      rows.slice(1).forEach(row => {
+        if (row[1].toString().trim() == group && row[2].toString().trim() == name) {
+          history.push({
+            timestamp: Utilities.formatDate(new Date(row[0]), "GMT+8", "yyyy-MM-dd HH:mm"),
+            quizType: row[3],
+            score: row[4],
+            details: row[5] 
+          });
+        }
+      });
+    }
+  });
+  return { success: true, data: history.reverse() };
+}
+
+// ==========================================
+// 3. 使用者與簽到管理 (Leader 權限控制)
+// ==========================================
+
+function handleLogin(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Users') || ss.insertSheet('Users');
+  if (sheet.getLastRow() < 1) sheet.appendRow(['Group', 'Name', 'Password', 'Role', 'RegTime']);
+  
+  const users = sheet.getDataRange().getValues();
+  const user = users.find(row => 
+    row[0].toString().trim() === data.group.toString().trim() && 
+    row[1].toString().trim() === data.name.toString().trim() && 
+    row[2].toString().trim() === data.password.toString().trim()
+  );
+  
+  if (!user) throw new Error("密碼錯誤或帳號未註冊");
+  return { success: true, name: user[1], group: user[0], role: user[3] || '組員' };
+}
+
+function handleRegister(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName('Users') || ss.insertSheet('Users');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['Group', 'Name', 'Password', 'Role', 'RegTime']);
+  
+  const records = sheet.getDataRange().getValues();
+  if (records.some(r => r[0].toString() == data.group && r[1].toString() == data.name)) throw new Error("此姓名已註冊");
+  
+  sheet.appendRow([data.group, data.name, data.password, '組員', new Date()]);
+  return { success: true };
+}
+
+function handleSignIn(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const monthStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy/MM");
+  const sheetName = '簽到' + monthStr;
+  const sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+  if (sheet.getLastRow() === 0) sheet.appendRow(['時間', '組別', '姓名', '假別', '原因']);
+  
+  const todayStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd");
+  const records = sheet.getDataRange().getValues();
+  let existingRowIndex = -1;
+  
+  for (let i = records.length - 1; i >= 1; i--) {
+    const rowDate = Utilities.formatDate(new Date(records[i][0]), "GMT+8", "yyyy-MM-dd");
+    if (rowDate === todayStr && records[i][1].toString().trim() === data.group.toString().trim() && records[i][2].toString().trim() === data.name.toString().trim()) {
+      existingRowIndex = i + 1; break;
+    }
+  }
+  
+  if (existingRowIndex !== -1) {
+    sheet.getRange(existingRowIndex, 1).setValue(new Date());
+    sheet.getRange(existingRowIndex, 4).setValue(data.leaveType || "正常出席");
+    sheet.getRange(existingRowIndex, 5).setValue(data.reason || "");
+    return { success: true, update: true };
+  } else {
+    sheet.appendRow([new Date(), data.group.trim(), data.name.trim(), data.leaveType || "正常出席", data.reason || ""]);
+    return { success: true };
+  }
+}
+
+function getAttendanceReport(role, userGroup) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const monthStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy/MM");
+  const sheetName = '簽到' + monthStr;
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return { success: true, data: [] };
+  
+  const data = sheet.getDataRange().getValues();
+  const todayStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd");
+  
+  const list = data.slice(1).filter(row => {
+    const rowDate = Utilities.formatDate(new Date(row[0]), "GMT+8", "yyyy-MM-dd");
+    // Leader 權限：組長僅能看到自己組別的人員
+    const groupMatch = (role !== 'Leader' && role !== '組長') || row[1] === userGroup;
+    return rowDate === todayStr && groupMatch;
+  }).map(row => ({
+    group: row[1],
+    name: row[2],
+    time: Utilities.formatDate(new Date(row[0]), "GMT+8", "HH:mm"),
+    note: (row[3] || "") + " " + (row[4] || "")
+  }));
+  
+  return { success: true, data: list };
+}
+
+function checkAttendanceStatus(group, name) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const monthStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy/MM");
+  const sheet = ss.getSheetByName('簽到' + monthStr);
+  if (!sheet) return { signedIn: false };
+  const today = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd");
+  const row = sheet.getDataRange().getValues().find(r => 
+    Utilities.formatDate(new Date(r[0]), "GMT+8", "yyyy-MM-dd") === today && 
+    r[1].toString().trim() == group.toString().trim() && 
+    r[2].toString().trim() == name.toString().trim()
+  );
+  return { signedIn: !!row, time: row ? Utilities.formatDate(new Date(row[0]), "GMT+8", "HH:mm") : "" };
+}
+
+// ==========================================
+// 4. 設定管理 (測驗時間控制)
+// ==========================================
+
+function handleGetConfig() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName('Config') || ss.insertSheet('Config');
+  if (sheet.getLastRow() < 1) return {};
+  const data = sheet.getDataRange().getValues();
+  const config = {};
+  data.slice(1).forEach(row => { if(row[0]) config[row[0].toString()] = { start: row[1], end: row[2] }; });
+  return config;
+}
+
+function handleUpdateConfig(configs) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName('Config') || ss.insertSheet('Config');
+  sheet.clear().appendRow(['Subject', 'StartTime', 'EndTime']);
+  let configObj = JSON.parse(configs);
+  for (let key in configObj) { sheet.appendRow([key, configObj[key].start, configObj[key].end]); }
+  return { success: true };
+}
