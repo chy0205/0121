@@ -104,8 +104,6 @@
         }
 
         .error-log { font-family: monospace; font-size: 11px; background: #fff5f5; border: 1px solid #feb2b2; color: #c53030; padding: 12px; border-radius: 12px; margin-top: 10px; line-height: 1.6; }
-        .history-item { animation: slideIn 0.4s ease-out forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         .resource-preview-iframe {
             width: 100%;
@@ -115,6 +113,17 @@
             margin-bottom: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             background: #f8fafc;
+        }
+
+        .announcement-image-preview {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .quiz-image {
@@ -193,7 +202,7 @@
                     <p class="text-xs text-slate-500 mt-1">GitHub 穩定版 - 自動生成 CDN 並同步試算表</p>
                 </div>
                 <button id="configToggle" class="p-2 bg-white rounded-full shadow hover:bg-slate-50 transition-colors">
-                    <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </button>
             </div>
 
@@ -226,7 +235,7 @@
                             <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         </div>
                         <p class="text-slate-600 font-medium font-bold">選取或拖放照片</p>
-                        <p id="batch-selected-count" class="text-xs text-slate-400 font-bold">支援一次多選照片</p>
+                        <p id="batch-selected-count" class="text-xs text-slate-400 font-bold">支援多選照片 (單張上限 20MB)</p>
                     </div>
                 </div>
 
@@ -234,7 +243,7 @@
                     開始批次傳輸
                 </button>
 
-                <div id="error-section" class="hidden text-left text-sm">
+                <div id="error-section" class="hidden mt-4 text-left text-sm">
                     <div id="error-log" class="error-log"></div>
                 </div>
 
@@ -291,42 +300,27 @@
         <!-- 管理中心 -->
         <div id="view-admin" class="hidden-view fade-in py-6">
             <h2 class="text-xl font-bold text-emerald-800 mb-4">管理中心</h2>
-            
             <div id="admin-group-filter-container" class="hidden mb-6 bg-white p-4 rounded-2xl border shadow-sm flex items-center gap-3">
                  <label class="text-xs font-bold text-slate-400 whitespace-nowrap uppercase tracking-widest">篩選組別：</label>
                  <select id="admin-group-filter" onchange="applyFilters()" class="w-full p-2 border rounded-lg bg-slate-50 outline-none font-bold text-slate-700 text-sm"></select>
             </div>
-
             <div id="attendance-report-list" class="space-y-3 mb-10"></div>
-            
-            <!-- 測驗設定區塊 -->
             <div id="quiz-config-container" class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-emerald-500 hidden mb-10 text-center">
                 <div class="flex justify-between items-center mb-4 text-left">
                     <h3 class="font-bold text-slate-700">測驗開放時段設定</h3>
                     <button onclick="quickOpenTwoHours()" class="text-[10px] bg-emerald-600 text-white px-3 py-1.5 rounded-full shadow-sm hover:bg-emerald-700 active:scale-95 transition-all">⚡ 一鍵開啟 2h</button>
                 </div>
-                
-                <!-- 核心開關按鈕 -->
-                <button id="master-quiz-toggle" onclick="toggleMasterQuizStatus()" class="w-full py-4 rounded-2xl font-black text-white shadow-xl transition-all active:scale-95 mb-6 text-lg tracking-widest bg-slate-400">
-                    讀取狀態中...
-                </button>
-                
+                <button id="master-quiz-toggle" onclick="toggleMasterQuizStatus()" class="w-full py-4 rounded-2xl font-black text-white shadow-xl transition-all active:scale-95 mb-6 text-lg tracking-widest bg-slate-400">讀取中...</button>
                 <div class="grid grid-cols-1 gap-4 mb-4 text-left text-sm">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 ml-2 uppercase">開始時間</label>
-                        <input type="datetime-local" id="unified-quiz-start" class="w-full p-3 border rounded-xl outline-none bg-slate-50 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 ml-2 uppercase">結束時間</label>
-                        <input type="datetime-local" id="unified-quiz-end" class="w-full p-3 border rounded-xl outline-none bg-slate-50 text-sm">
-                    </div>
+                    <div><label class="text-[10px] font-bold text-slate-400 ml-2 uppercase">開始時間</label><input type="datetime-local" id="unified-quiz-start" class="w-full p-3 border rounded-xl outline-none bg-slate-50 text-sm"></div>
+                    <div><label class="text-[10px] font-bold text-slate-400 ml-2 uppercase">結束時間</label><input type="datetime-local" id="unified-quiz-end" class="w-full p-3 border rounded-xl outline-none bg-slate-50 text-sm"></div>
                 </div>
                 <button onclick="saveUnifiedQuizSettings()" id="quiz-save-btn" class="w-full py-4 btn-primary rounded-xl font-bold shadow-lg">手動儲存雲端設定</button>
             </div>
         </div>
     </main>
 
-    <!-- Modal 區塊 -->
+    <!-- Modal 集 -->
     <div id="announcement-modal" class="modal" onclick="closeAnnouncementModal()">
         <div class="modal-content !max-w-xl" onclick="event.stopPropagation()">
             <h3 id="ann-modal-title" class="text-xl font-bold text-slate-800 border-b pb-4 mb-4">編輯公告</h3>
@@ -357,68 +351,61 @@
     <input type="file" id="global-file-picker" class="hidden" onchange="processFileSelection(event)">
 
     <script>
-        // --- 1. 全域定義 (確保 APPS_SCRIPT_URL 在最上方) ---
+        // --- 1. 全域定義與常數 ---
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1NP6yn-7gSufZayMe-Y0pnaDPJTeTFf8XKRvi4wAiZJyiabesxc2iV58L1Wj3JLY9_Q/exec';
         const SPREADSHEET_ID = '1u3D7u5hn7dcVGgGxmNBm233B_sz16kPuUcncvCnNr6U';
         const TEAMS_GID = '1026036029';
         const GROUP_ORDER = ['第一組', '第二組', '第三組', '第四組', '第五組', '第六組', '第七組','孟加拉', '德國', '印尼', '馬來', '神州', '主領班', '特助'];
         const QUIZ_GIDS = { '隨堂': '0', '論語': '1250135497', '性理': '1342680959', '道德經': '1246480043', '六祖': '1302889740' };
+        const MAX_FILE_SIZE = 20 * 1024 * 1024; 
 
         let currentUser = null, teamsData = {}, historyData = [], cachedAnnouncements = [], cachedSignedUsers = [], proxyTarget = null, currentQuizOpenStatus = false, quizData = [], batchUploadedUrls = [], activeRowForUpload = null;
 
-        // --- 2. 基礎工具 ---
-        function toast(m, isErr = false) { 
-            const b = document.getElementById('message-box'); if (!b) return;
-            b.innerText = m; b.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] font-bold ${isErr?'bg-red-500':'bg-emerald-600'} pointer-events-none`; 
-            b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 5000); 
-        }
-        function showBatchToast(msg, isError = false) { const t = document.getElementById('batch-toast'); if(!t) return; t.innerText = msg; t.style.backgroundColor = isError ? '#ef4444' : '#000000'; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2500); }
-        function safeJSONParse(str, fallback = []) { if (!str || str === "undefined" || str === "null") return fallback; try { return JSON.parse(str); } catch (e) { return fallback; } }
-        function convertToDirectLink(url) { if (!url) return ""; if (url.includes('drive.google.com/file/d/')) { return `https://drive.google.com/uc?id=${url.split('/d/')[1].split('/')[0]}`; } return url; }
-        function convertToEmbedPdfLink(url) { if (url.includes('drive.google.com/file/d/')) { return `https://drive.google.com/file/d/${url.split('/d/')[1].split('/')[0]}/preview`; } return url; }
-        function isPdfUrl(url) { if (!url) return false; return url.toLowerCase().includes('.pdf') || (url.includes('drive.google.com') && url.toLowerCase().includes('pdf')); }
-        
+        // --- 2. 基礎解析與工具 ---
         function parseToTaipeiDate(val) { 
             if (!val) return null; 
             const cleanVal = val.toString().replace(/\//g, '-').replace(' ', 'T'); 
             return new Date(cleanVal + (cleanVal.includes('+') ? '' : '+08:00')); 
         }
         function getBatchFormattedDate() { const now = new Date(); const pad = (n) => String(n).padStart(2, '0'); return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`; }
-
-        // --- 3. 視圖切換與導覽 ---
-        function switchView(viewName) {
-            document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden-view'));
-            const target = document.getElementById(`view-${viewName}`); if (target) target.classList.remove('hidden-view');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            const navItems = document.querySelectorAll('.nav-item');
-            const menuMap = { 'bulletin': 0, 'attendance': 1, 'quiz': 2, 'results': 3, 'img-transfer': 4, 'admin': 5 };
-            const activeIdx = menuMap[viewName];
-            if (activeIdx !== undefined && navItems[activeIdx]) navItems[activeIdx].classList.add('active');
-
-            if(viewName === 'bulletin') loadAnnouncements();
-            if(viewName === 'attendance' && currentUser) checkAttendance();
-            if(viewName === 'results' && currentUser) loadHistoryData();
-            if(viewName === 'admin' && currentUser) loadAdminDashboard();
-            if(viewName === 'img-transfer') setupImgTransfer();
-            window.scrollTo(0,0);
+        function safeJSONParse(str, fallback = []) { if (!str || str === "undefined" || str === "null") return fallback; try { return JSON.parse(str); } catch (e) { return fallback; } }
+        function convertToDirectLink(url) { 
+            if (!url) return ""; 
+            if (url.includes('drive.google.com/file/d/')) { return `https://drive.google.com/uc?id=${url.split('/d/')[1].split('/')[0]}`; } 
+            return url; 
+        }
+        function convertToEmbedPdfLink(url) { if (url.includes('drive.google.com/file/d/')) { return `https://drive.google.com/file/d/${url.split('/d/')[1].split('/')[0]}/preview`; } return url; }
+        function isPdfUrl(url) { if (!url) return false; return url.toLowerCase().includes('.pdf') || (url.includes('drive.google.com') && url.toLowerCase().includes('pdf')); }
+        
+        // 新增圖片判定邏輯
+        function isImageUrl(url) {
+            if (!url) return false;
+            const imgExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+            const isImgExt = imgExts.some(ext => url.toLowerCase().includes(ext));
+            const isGdriveImg = url.includes('drive.google.com') && !url.toLowerCase().includes('pdf');
+            return isImgExt || isGdriveImg;
         }
 
-        // --- 4. 核心功能：設定讀取、同步與開關 ---
+        function toast(m, isErr = false) { 
+            const b = document.getElementById('message-box'); if (!b) return;
+            b.innerText = m; b.className = `fixed top-5 right-5 p-4 rounded-lg shadow-2xl text-white z-[3000] font-bold ${isErr?'bg-red-500':'bg-emerald-600'} pointer-events-none`; 
+            b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 5000); 
+        }
+        function showBatchToast(msg, isError = false) { const t = document.getElementById('batch-toast'); if(!t) return; t.innerText = msg; t.style.backgroundColor = isError ? '#ef4444' : '#000000'; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2500); }
+
+        // --- 3. 設定讀取與同步 ---
         async function loadQuizConfigs() { 
             try { 
                 const res = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`), config = await res.json();
                 if (config.gh_token?.start) localStorage.setItem('gh_token', config.gh_token.start);
                 if (config.gh_repo?.start) localStorage.setItem('gh_repo', config.gh_repo.start);
                 if (config.gh_branch?.start) localStorage.setItem('gh_branch', config.gh_branch.start);
-
                 const sConf = config['隨堂'] || { start: '', end: '' };
                 const format = (val) => { if (!val) return ''; let dStr = val.toString().trim().replace(/\//g, '-').replace(' ', 'T'); return dStr.substring(0, 16); }; 
                 const sI = document.getElementById('unified-quiz-start'), eI = document.getElementById('unified-quiz-end');
                 if(sI) sI.value = format(sConf.start); if(eI) eI.value = format(sConf.end); 
-                
                 const now = new Date(), start = parseToTaipeiDate(sConf.start), end = parseToTaipeiDate(sConf.end); 
                 currentQuizOpenStatus = (start && end && now >= start && now <= end); 
-                
                 const btn = document.getElementById('master-quiz-toggle'); 
                 if(btn) { 
                     btn.innerText = currentQuizOpenStatus ? "🟢 測驗開放中 (按一下關閉)" : "🔴 測驗已關閉 (按一下開啟 2h)"; 
@@ -429,29 +416,24 @@
 
         async function toggleMasterQuizStatus() {
             if (currentQuizOpenStatus) {
-                const now = new Date();
-                const pad = (n) => String(n).padStart(2, '0');
+                const now = new Date(); const pad = (n) => String(n).padStart(2, '0');
                 const pastTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
                 document.getElementById('unified-quiz-start').value = pastTime.replace(' ', 'T');
                 document.getElementById('unified-quiz-end').value = pastTime.replace(' ', 'T');
-                toast('正在關閉測驗...');
-                await saveUnifiedQuizSettings(true); 
-                toast('測驗已立即關閉');
-            } else {
-                quickOpenTwoHours();
-            }
+                toast('正在關閉測驗...'); await saveUnifiedQuizSettings(true); toast('測驗已關閉');
+            } else { quickOpenTwoHours(); }
         }
 
         async function quickOpenTwoHours() {
-            const now = new Date(), end = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+            const now = new Date(), end = new Date(now.getTime() + 2*3600000);
             const pad = (n) => String(n).padStart(2, '0');
             const fG = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
             const s = fG(now), e = fG(end);
-            toast('正在開啟考試...');
+            toast('正在開啟一鍵考試...');
             try {
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', config: JSON.stringify({ '隨堂':{start:s,end:e},'論語':{start:s,end:e},'性理':{start:s,end:e},'道德經':{start:s,end:e},'六祖':{start:s,end:e} }) }) });
-                if((await res.json()).success) { toast('測驗已開放 2 小時'); loadQuizConfigs(); }
-            } catch (err) { toast('同步失敗', true); }
+                if((await res.json()).success) { toast('已成功開放 2 小時'); loadQuizConfigs(); }
+            } catch (err) { toast('開啟失敗', true); }
         }
 
         async function saveUnifiedQuizSettings(silent = false) {
@@ -459,11 +441,65 @@
             if(!s || !e) return toast('請輸入完整時間', true);
             try {
                 const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', config: JSON.stringify({ '隨堂':{start:s,end:e},'論語':{start:s,end:e},'性理':{start:s,end:e},'道德經':{start:s,end:e},'六祖':{start:s,end:e} }) }) });
-                if((await res.json()).success) { if(!silent) toast('雲端更新成功'); loadQuizConfigs(); }
-            } catch (e) { toast('失敗', true); }
+                if((await res.json()).success) { if(!silent) toast('雲端設定已更新'); loadQuizConfigs(); }
+            } catch (e) { toast('同步失敗', true); }
         }
 
-        // --- 5. 管理中心報表 ---
+        // --- 4. 視圖切換與導覽 ---
+        function switchView(viewName) {
+            document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden-view'));
+            const target = document.getElementById(`view-${viewName}`); if (target) target.classList.remove('hidden-view');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const navItems = document.querySelectorAll('.nav-item');
+            const menuMap = { 'bulletin': 0, 'attendance': 1, 'quiz': 2, 'results': 3, 'img-transfer': 4, 'admin': 5 };
+            const activeIdx = menuMap[viewName];
+            if (activeIdx !== undefined && navItems[activeIdx]) navItems[activeIdx].classList.add('active');
+            
+            if(viewName === 'bulletin') loadAnnouncements();
+            if(viewName === 'attendance' && currentUser) checkAttendance();
+            if(viewName === 'results' && currentUser) loadHistoryData();
+            if(viewName === 'admin' && currentUser) loadAdminDashboard();
+            if(viewName === 'img-transfer') setupImgTransfer();
+            window.scrollTo(0,0);
+        }
+
+        // --- 5. 公告系統 (新增照片預覽邏輯) ---
+        async function loadAnnouncements() { const list = document.getElementById('announcement-list'); try { const res = await fetch(`${APPS_SCRIPT_URL}?action=getAnnouncements`), r = await res.json(); cachedAnnouncements = r.data || []; renderAnnouncements(); } catch (e) {} }
+        function renderAnnouncements() {
+            const list = document.getElementById('announcement-list'); if(!list) return;
+            const isAdmin = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser?.role);
+            const filtered = cachedAnnouncements.filter(a => isAdmin || a.visible !== 'N');
+            list.innerHTML = filtered.length ? filtered.map((ann) => {
+                let res = safeJSONParse(ann.link, []);
+                // 1. 過濾 PDF 預覽
+                const pdfs = res.filter(r => isPdfUrl(r.url));
+                // 2. 過濾 圖片 預覽
+                const imgs = res.filter(r => isImageUrl(r.url));
+                const hideTag = (isAdmin && ann.visible === 'N') ? '<span class="ml-2 bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold">隱藏中</span>' : '';
+                
+                return `
+                    <div class="bg-white p-6 rounded-2xl border mb-4 relative group fade-in ${ann.visible === 'N' ? 'opacity-70 grayscale-[0.3]' : ''}">
+                        ${isAdmin ? `<button onclick="openAnnouncementModal(${ann.id})" class="absolute top-4 right-4 text-xs text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-all">編輯</button>` : ''}
+                        <div class="text-[10px] font-mono text-emerald-600 font-bold mb-1 uppercase tracking-wider">${ann.time} ${hideTag}</div>
+                        <h3 class="text-lg font-black text-slate-800 mb-2">${ann.title}</h3>
+                        <div class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-4">${ann.content}</div>
+                        
+                        <!-- 圖片預覽區域 -->
+                        ${imgs.map(img => `<img src="${convertToDirectLink(img.url)}" class="announcement-image-preview" loading="lazy">`).join('')}
+                        
+                        <!-- PDF 預覽區域 -->
+                        ${pdfs.map(pdf => `<iframe src="${convertToEmbedPdfLink(pdf.url)}" class="resource-preview-iframe"></iframe>`).join('')}
+                        
+                        <!-- 附件連結列表 -->
+                        ${res.length > 0 ? `
+                            <div class="pt-4 border-t border-slate-50 flex flex-wrap gap-2">
+                                ${res.map(r => `<a href="${r.url}" target="_blank" class="text-xs bg-emerald-50 text-emerald-600 px-3 py-2 rounded-lg font-bold flex items-center gap-1 hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100">🔗 ${r.label}</a>`).join('')}
+                            </div>` : ''}
+                    </div>`;
+            }).join('') : '<p class="text-center py-20 text-slate-400 font-bold italic">目前尚無內容</p>';
+        }
+
+        // --- 6. 管理中心報表 ---
         async function loadAdminDashboard() {
             if(!currentUser) return;
             const isM = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser.role);
@@ -482,7 +518,7 @@
                     if (quizConfig) quizConfig.classList.remove('hidden');
                 }
                 applyFilters(); if(isM) loadQuizConfigs();
-            } catch (e) { toast('載入失敗', true); }
+            } catch (e) { toast('資料載入失敗', true); }
         }
 
         function applyFilters() {
@@ -490,7 +526,7 @@
             let html = ''; (gVal === 'ALL' ? Object.keys(teamsData).sort((a,b)=>GROUP_ORDER.indexOf(a)-GROUP_ORDER.indexOf(b)) : [gVal]).forEach(gn => { html += `<div class="text-xs font-bold text-slate-400 mt-6 px-1 border-l-2 border-emerald-500 ml-1 mb-2">${gn}</div>`; (teamsData[gn] || []).forEach(name => { const sign = cachedSignedUsers.find(s => s.group === gn && s.name === name); let dot = 'dot-missing', tCol = 'text-red-500', txt = '❌ 未簽'; if (sign) { const n = sign.note || ''; if (n.includes('晚到')) { dot = 'dot-late'; tCol = 'text-amber-500'; txt = `⏳ ${sign.time} (晚到)`; } else if (n.includes('公假')) { dot = 'dot-official'; tCol = 'text-blue-500'; txt = `🏛️ ${n}`; } else if (n.includes('假')) { dot = 'dot-leave'; tCol = 'text-orange-500'; txt = `📋 ${n}`; } else { dot = 'dot-signed'; tCol = 'text-emerald-600'; txt = `✅ ${sign.time}`; } } html += `<div class="bg-white p-3 rounded-xl border mb-2 flex justify-between shadow-sm items-center hover:border-emerald-200 transition-all"><div class="flex items-center"><span class="status-dot ${dot}"></span><span class="text-sm font-bold text-slate-700">${name}</span></div><div class="flex items-center gap-3"><span class="${tCol} text-xs font-black">${txt}</span><button onclick="openProxyModal('${gn}', '${name}')" class="text-[10px] border px-2 py-1 rounded bg-slate-50 text-slate-500">調整</button></div></div>`; }); }); list.innerHTML = html;
         }
 
-        // --- 6. 其他核心業務 (圖傳、簽到、測驗、公告) ---
+        // --- 7. 圖傳系統 (GitHub 版) ---
         function setupImgTransfer() {
             const tI = document.getElementById('inputToken'), rI = document.getElementById('inputRepo'), bI = document.getElementById('inputBranch');
             tI.value = localStorage.getItem('gh_token') || ''; rI.value = localStorage.getItem('gh_repo') || ''; bI.value = localStorage.getItem('gh_branch') || 'main';
@@ -510,9 +546,15 @@
                 const t = localStorage.getItem('gh_token'), r = localStorage.getItem('gh_repo'), b = localStorage.getItem('gh_branch'), files = fI.files;
                 if (!t || !r) { cP.classList.remove('hidden'); return showBatchToast("請完成設定", true); }
                 if (files.length === 0) return showBatchToast("請選擇照片", true);
+                const validFiles = [];
+                for(let i=0; i<files.length; i++) {
+                    if(files[i].size > MAX_FILE_SIZE) toast(`檔案 ${files[i].name} 超過 20MB，請先壓縮！`, true);
+                    else validFiles.push(files[i]);
+                }
+                if (validFiles.length === 0) return;
                 ub.disabled = true; document.getElementById('batch-result-container').classList.remove('hidden'); document.getElementById('batch-result-list').innerHTML = ''; batchUploadedUrls = [];
-                for (let i = 0; i < files.length; i++) {
-                    const f = files[i]; ub.innerText = `傳輸中 (${i+1}/${files.length})...`;
+                for (let i = 0; i < validFiles.length; i++) {
+                    const f = validFiles[i]; ub.innerText = `正在傳輸 (${i+1}/${validFiles.length})...`;
                     try { const url = await uploadToGithub(f, t, r, b); batchUploadedUrls.push(url); addBatchResultItem(f.name, url); saveToBatchHistory(url, f.name); await saveRecordToSheet(url, f.name); } 
                     catch (err) { addBatchResultItem(f.name, null, err.message); }
                 }
@@ -533,17 +575,56 @@
             });
         }
         async function saveRecordToSheet(url, fileName) { try { await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveTransferRecord', group: currentUser?.group || '管理員', name: currentUser?.name || '管理員', fileName: fileName, url: url }) }); } catch (e) {} }
-        function addBatchResultItem(name, url, error = null) { const list = document.getElementById('batch-result-list'); const div = document.createElement('div'); div.className = "result-item flex items-center justify-between p-2 bg-slate-50 border rounded-lg mb-1"; if (error) { div.innerHTML = `<span class="truncate w-1/2">${name}</span><span class="text-red-500">失敗</span>`; } else { div.innerHTML = `<div class="flex items-center space-x-2 w-1/3"><img src="${url}" class="w-6 h-6 rounded object-cover border"> <span class="truncate">${name}</span></div><input readonly value="${url}" class="text-[9px] border px-1 rounded w-1/2 outline-none font-mono text-emerald-600 truncate"><button onclick="copyToClipboard('${url}')" class="text-emerald-700 font-bold px-1 hover:underline">複製</button>`; } list.appendChild(div); }
+        function addBatchResultItem(name, url, error = null) { const list = document.getElementById('batch-result-list'); const div = document.createElement('div'); div.className = "flex items-center justify-between p-2 bg-slate-50 border rounded-lg mb-1"; if (error) { div.innerHTML = `<span class="truncate w-1/2">${name}</span><span class="text-red-500">失敗</span>`; } else { div.innerHTML = `<div class="flex items-center space-x-2 w-1/3"><img src="${url}" class="w-6 h-6 rounded object-cover border"> <span class="truncate">${name}</span></div><input readonly value="${url}" class="text-[9px] border px-1 rounded w-1/2 outline-none font-mono text-emerald-600 truncate"><button onclick="copyToClipboard('${url}')" class="text-emerald-700 font-bold px-1 hover:underline">複製</button>`; } if(list) list.appendChild(div); }
         function saveToBatchHistory(url, name) { let h = JSON.parse(localStorage.getItem('gh_history_list') || '[]'); const nI = { url, name, timestamp: Date.now() }; if (h.find(x => x.url === url)) return; h.unshift(nI); if (h.length > 20) h = h.slice(0, 20); localStorage.setItem('gh_history_list', JSON.stringify(h)); loadBatchHistory(); }
-        function loadBatchHistory() { const list = document.getElementById('batch-history-list'); if(!list) return; let h = JSON.parse(localStorage.getItem('gh_history_list') || '[]'); if (h.length === 0) { list.innerHTML = '<p class="col-span-full text-center text-slate-300 py-10 text-xs italic">無紀錄</p>'; return; } list.innerHTML = h.map(item => `<div class="relative group aspect-square bg-slate-50 rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:border-emerald-300 transition-all"><img src="${item.url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><button onclick="copyToClipboard('${item.url}')" class="bg-white text-[10px] font-bold px-2 py-1 rounded shadow-lg text-xs font-bold">複製網址</button></div></div>`).join(''); }
+        function loadBatchHistory() { const list = document.getElementById('batch-history-list'); if(!list) return; let h = JSON.parse(localStorage.getItem('gh_history_list') || '[]'); if (h.length === 0) { list.innerHTML = '<p class="col-span-full text-center text-slate-300 py-10 text-xs italic font-bold">無紀錄</p>'; return; } list.innerHTML = h.map(item => `<div class="relative group aspect-square bg-slate-50 rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:border-emerald-300 transition-all"><img src="${item.url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><button onclick="copyToClipboard('${item.url}')" class="bg-white text-[10px] font-bold px-2 py-1 rounded shadow-lg text-xs font-bold">複製網址</button></div></div>`).join(''); }
         function exportToCSV() { const h = JSON.parse(localStorage.getItem('gh_history_list') || '[]'); if (h.length === 0) return showBatchToast("無數據", true); let c = "\uFEFF檔案名稱,網址,時間\n"; h.forEach(i => c += `"${i.name}","${i.url}","${new Date(i.timestamp).toLocaleString().replace(/,/g, '')}"\n`); const b = new Blob([c], { type: "text/csv;charset=utf-8;" }); const l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `圖傳紀錄_${getBatchFormattedDate()}.csv`; l.click(); }
-        function clearBatchHistory() { if (confirm("確定清除紀錄？")) { localStorage.removeItem('gh_history_list'); loadBatchHistory(); showBatchToast("已清空"); } }
+        function clearBatchHistory() { if (confirm("確定清除紀錄？")) { localStorage.removeItem('gh_history_list'); loadBatchHistory(); showBatchToast("歷史已清空"); } }
         function copyToClipboard(str) { const el = document.createElement('textarea'); el.value = str; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); showBatchToast("已複製連結"); }
         function copyAllBatchUrls() { if (batchUploadedUrls.length > 0) { copyToClipboard(batchUploadedUrls.join('\n')); showBatchToast("已複製全部"); } }
 
-        // --- 7. 初始化應用 ---
+        // --- 8. 其他基礎系統 (成績、簽到、帳號) ---
+        async function loadHistoryData() { const list = document.getElementById('history-list'); if(!list) return; try { const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&name=${encodeURIComponent(currentUser.name)}&group=${encodeURIComponent(currentUser.group)}`); const r = await res.json(); if (r.success && r.data.length) { historyData = r.data; list.innerHTML = r.data.map((h, i) => `<div class="bg-white p-5 rounded-2xl border flex justify-between shadow-sm cursor-pointer hover:border-emerald-300 transition-all" onclick="showExamDetail(${i})"><div><div class="text-[10px] text-slate-400 mb-1">${h.timestamp}</div><div class="font-bold text-slate-700">${h.quizType}</div></div><div class="text-3xl font-black text-emerald-500">${h.score}</div></div>`).join(''); } else { list.innerHTML = '<p class="text-center py-20 text-slate-400">尚無紀錄</p>'; } } catch (e) {} }
+        function showExamDetail(idx) { const h = historyData[idx]; if (!h || !h.details) return; const title = document.getElementById('detail-title'), body = document.getElementById('detail-body'); title.innerText = `${h.quizType} - 詳解`; let details = safeJSONParse(h.details, []); body.innerHTML = details.map((d, i) => `<div class="p-4 border rounded-2xl mb-2 ${d.isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}"><div class="font-bold text-slate-800">${i+1}. ${d.question}</div>${(d.photo && d.photo.includes('http')) ? `<img src="${convertToDirectLink(d.photo)}" class="quiz-image my-2">` : ""}<div class="text-sm mt-2">您的回答：<span class="${d.isCorrect ? 'text-emerald-600' : 'text-rose-600'} font-bold">${d.userAnswer}</span></div>${!d.isCorrect ? `<div class="text-xs text-emerald-600 mt-1 font-bold">正確：${d.correctAnswer}</div>` : ''}</div>`).join(''); document.getElementById('detail-modal').style.display = 'flex'; }
+        function closeDetailModal() { document.getElementById('detail-modal').style.display = 'none'; }
+        async function checkAttendance() { const div = document.getElementById('attendance-status'), btn = document.getElementById('signin-btn'); if(!div) return; try { const res = await fetch(`${APPS_SCRIPT_URL}?action=checkAttendance&group=${encodeURIComponent(currentUser.group)}&name=${encodeURIComponent(currentUser.name)}`); const r = await res.json(); div.innerHTML = r.signedIn ? `✅ 今日簽到 (${r.time})` : `尚未簽到`; if(r.signedIn) btn?.classList.add('hidden'); else btn?.classList.remove('hidden'); } catch (e) {} }
+        async function performSignIn() { try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'signIn', group: currentUser.group, name: currentUser.name }) }); if ((await res.json()).success) { toast('簽到完成'); checkAttendance(); } } catch (e) {} }
+        async function handleLogin() { const g = document.getElementById('login-group')?.value, n = document.getElementById('login-name')?.value, p = document.getElementById('login-pass')?.value; if(!g || !n || !p) return toast('完整輸入', true); const btn = document.getElementById('login-btn'); btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', group: g, name: n, password: p }) }); const r = await res.json(); if(r.success) { currentUser = r; localStorage.setItem('sh_user_secure', JSON.stringify(r)); initApp(); } else toast(r.error, true); } catch (e) { toast('連線失敗', true); } finally { btn.disabled = false; } }
+        async function handleRegister() { const g = document.getElementById('reg-group').value, n = document.getElementById('reg-name').value, p = document.getElementById('reg-pass').value, c = document.getElementById('reg-pass-confirm').value; if(p !== c) return toast('不一致', true); const btn = document.getElementById('reg-btn'); btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({action:'register', group:g, name:n, password:p}) }); if((await res.json()).success) { toast('請登入'); switchView('login'); } } catch(e) { toast('失敗', true); } finally { btn.disabled = false; } }
         async function fetchTeamsData() { try { const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${TEAMS_GID}&t=${Date.now()}`), text = await res.text(), data = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]); teamsData = {}; data.table.rows.forEach(r => { const g = r.c[0]?.v, n = r.c[1]?.v; if(g && n && g!=='組別') { if(!teamsData[g]) teamsData[g] = []; teamsData[g].push(n); } }); const groups = Object.keys(teamsData).sort((a,b) => GROUP_ORDER.indexOf(a) - GROUP_ORDER.indexOf(b)); ['login-group', 'reg-group'].forEach(id => { const s = document.getElementById(id); if(!s) return; s.innerHTML = '<option value="" disabled selected>請選擇組別</option>'; groups.forEach(g => s.add(new Option(g, g))); s.onchange = (e) => { const ns = id==='login-group'?document.getElementById('login-name'):document.getElementById('reg-name'); ns.innerHTML = '<option value="" disabled selected>姓名</option>'; (teamsData[e.target.value] || []).sort().forEach(n => ns.add(new Option(n, n))); ns.disabled = false; }; }); } catch (e) {} }
+        
+        // 公告模組功能
+        function openAnnouncementModal(id) { const d = id ? cachedAnnouncements.find(a => a.id == id) : null; document.getElementById('ann-modal-title').innerText = d ? "編輯公告" : "發布公告"; document.getElementById('ann-id').value = d ? d.id : ""; document.getElementById('ann-title').value = d ? d.title : ""; document.getElementById('ann-content').value = d ? d.content : ""; document.getElementById('ann-visible').value = d ? d.visible : "Y"; const container = document.getElementById('ann-resources-container'); container.innerHTML = ''; if (d) { let rData = safeJSONParse(d.link, []); rData.forEach(r => addResourceRow(r.label, r.url)); } else { addResourceRow('', ''); } document.getElementById('announcement-modal').style.display = 'flex'; }
+        function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
+        async function submitAnnouncement() { const resData = []; document.querySelectorAll('.resource-row').forEach(row => { const l = row.querySelector('.res-label').value.trim(), u = row.querySelector('.res-url').value.trim(); if(l && u) resData.push({label: l, url: u}); }); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateAnnouncement', id: document.getElementById('ann-id').value, title: document.getElementById('ann-title').value, content: document.getElementById('ann-content').value, link: JSON.stringify(resData), visible: document.getElementById('ann-visible').value }) }); if((await res.json()).success) { toast('完成'); closeAnnouncementModal(); loadAnnouncements(); } } catch (e) { toast('失敗', true); } }
+        function addResourceRow(l='', u='') { const div = document.createElement('div'); div.className = "flex gap-2 mb-2 resource-row"; div.innerHTML = `<input type="text" placeholder="名稱" class="res-label flex-1 p-2 text-xs border rounded-lg" value="${l}"><input type="text" placeholder="網址" class="res-url flex-[2] p-2 text-xs border rounded-lg bg-slate-50" value="${u}"><button onclick="triggerFileUpload(this)" title="上傳" class="text-emerald-600 p-1 hover:bg-emerald-50 rounded">☁️</button><button onclick="this.parentElement.remove()" class="text-red-400 p-1 rounded">✕</button>`; document.getElementById('ann-resources-container').appendChild(div); }
+        function triggerFileUpload(btn) { activeRowForUpload = btn.parentElement; document.getElementById('global-file-picker').click(); }
+        async function processFileSelection(event) { 
+            const file = event.target.files[0]; if (!file || !activeRowForUpload) return;
+            if (file.size > MAX_FILE_SIZE) { toast('檔案不可超過 20MB', true); event.target.value = ''; return; }
+            const labelInput = activeRowForUpload.querySelector('.res-label'), urlInput = activeRowForUpload.querySelector('.res-url');
+            toast(`正在處理：${file.name}...`);
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadFile', fileName: file.name, mimeType: file.type, base64Data: e.target.result.split(',')[1] }) });
+                    const result = await res.json();
+                    if (result.success) { if(labelInput && !labelInput.value) labelInput.value = file.name; if(urlInput) urlInput.value = result.url; toast('完成'); }
+                    else toast(result.error, true);
+                } catch (err) { toast('連線失敗', true); }
+            };
+            reader.readAsDataURL(file); event.target.value = '';
+        }
+        function openProxyModal(g, n) { proxyTarget = { group: g, name: n }; document.getElementById('proxy-target-display').innerText = `${g} - ${n}`; document.getElementById('proxy-sign-modal').style.display = "flex"; }
+        function closeProxyModal() { document.getElementById('proxy-sign-modal').style.display = "none"; }
+        async function submitProxySignIn() { const btn = document.getElementById('proxy-submit-btn'); if(!btn) return; btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'signIn', group: proxyTarget.group, name: proxyTarget.name, leaveType: document.getElementById('proxy-status-select').value, reason: document.getElementById('proxy-reason-input').value }) }); if ((await res.json()).success) { toast('完成'); closeProxyModal(); loadAdminDashboard(); } } catch (e) { toast('失敗', true); } finally { btn.disabled = false; } }
 
+        async function startQuizFlow() { const type = document.getElementById('quiz-type-select')?.value; if (!type) return toast('請選擇科目', true); const btn = document.getElementById('start-quiz-btn'); btn.disabled = true; try { const resConfig = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`), config = await resConfig.json(), quizConf = config['隨堂'] || config[type], now = new Date(); if (quizConf?.start && quizConf?.end) { const st = parseToTaipeiDate(quizConf.start), et = parseToTaipeiDate(quizConf.end); if (now < st || now > et) { toast(`測驗尚未開放`, true); btn.disabled = false; return; } } document.getElementById('quiz-init').classList.add('hidden'); document.getElementById('quiz-main').classList.remove('hidden'); const [q1, q2] = await Promise.all([fetchSingleSheet(QUIZ_GIDS['隨堂']), fetchSingleSheet(QUIZ_GIDS[type])]); quizData = [...q1, ...q2]; renderQuiz(); } catch (e) { btn.disabled = false; } }
+        function renderQuiz() { const content = document.getElementById('quiz-content'); if(!content) return; let h = `<div class="bg-emerald-50 p-3 rounded-xl mb-4 text-emerald-800 text-xs font-bold text-center">測驗中</div>`; quizData.forEach((q, i) => { const qId = `q${i + 1}`; let imgHtml = (q.photo && q.photo.includes('http')) ? `<img src="${convertToDirectLink(q.photo)}" class="quiz-image">` : ""; let opts = q.isBonus || q.type === 'fill' ? `<input type="text" class="w-full p-4 border rounded-xl" id="${qId}-input">` : [...q.options].sort(()=>Math.random()-0.5).map(o => `<label class="hover:bg-slate-50 border p-3 rounded-xl flex items-center mb-2 cursor-pointer text-sm"><input type="${q.type === 'single' ? 'radio' : 'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600"><span>${o}</span></label>`).join(''); h += `<div class="${q.isBonus ? 'bonus-card' : 'question-card'} p-6 rounded-2xl shadow-sm mb-6 bg-white border"><div>第 ${i + 1} 題</div><h3 class="font-bold mb-2 text-slate-800">${q.question}</h3>${imgHtml}<div class="mt-4">${opts}</div></div>`; }); h += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-2xl font-bold shadow-xl">提交考卷</button>`; content.innerHTML = h; window.scrollTo(0,0); }
+        async function handleQuizSubmit() { const btn = document.getElementById('quiz-final-btn'); btn.disabled = true; const answers = quizData.map((q, i) => { let val = '未作答'; if(q.isBonus || q.type === 'fill') val = document.getElementById(`q${i + 1}-input`)?.value.trim() || '未作答'; else if(q.type === 'single') val = document.querySelector(`input[name="q${i + 1}"]:checked`)?.value || '未作答'; else val = Array.from(document.querySelectorAll(`input[name="q${i + 1}"]:checked`)).map(i => i.value).sort().join(', '); return { userAnswer: val, isBonus: q.isBonus, photo: q.photo, question: q.question }; }); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitQuiz', group: currentUser.group, name: currentUser.name, quizType: document.getElementById('quiz-type-select').value, userAnswersJson: JSON.stringify(answers), quizDataJson: JSON.stringify(quizData) }) }); if ((await res.json()).status === 'success') { toast('提交成功'); switchView('results'); } } catch (e) { btn.disabled = false; } }
+        async function fetchSingleSheet(gid) { try { const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`); const text = await res.text(), data = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]); return data.table.rows.map(r => { if (!r.c[0]?.v) return null; return { question: r.c[0]?.v, type: r.c[1]?.v?.toLowerCase().trim() || 'single', options: r.c[2]?.v ? String(r.c[2].v).split(',').map(s=>s.trim()) : [], answer: String(r.c[3]?.v||'').split(',').map(s=>s.trim()), score: parseFloat(r.c[4]?.v||0), photo: r.c[5]?.v || '', isBonus: r.c[6]?.v === '是' || r.c[6]?.v === 'Yes' }; }).filter(q => q !== null); } catch(e) { return []; } }
+
+        // --- 9. 初始化啟動 ---
         function initApp() {
             fetchTeamsData(); 
             loadQuizConfigs();
@@ -566,30 +647,7 @@
             } else { switchView('login'); }
         }
 
-        // --- 8. 其他基礎子系統 ---
-        async function handleLogin() { const g = document.getElementById('login-group')?.value, n = document.getElementById('login-name')?.value, p = document.getElementById('login-pass')?.value; if(!g || !n || !p) return toast('完整輸入', true); const btn = document.getElementById('login-btn'); btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', group: g, name: n, password: p }) }); const r = await res.json(); if(r.success) { currentUser = r; localStorage.setItem('sh_user_secure', JSON.stringify(r)); initApp(); } else toast(r.error, true); } catch (e) { toast('連線失敗', true); } finally { btn.disabled = false; } }
-        async function handleRegister() { const g = document.getElementById('reg-group').value, n = document.getElementById('reg-name').value, p = document.getElementById('reg-pass').value, c = document.getElementById('reg-pass-confirm').value; if(p !== c) return toast('密碼不一致', true); const btn = document.getElementById('reg-btn'); btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({action:'register', group:g, name:n, password:p}) }); if((await res.json()).success) { toast('成功，請登入'); switchView('login'); } } catch(e) { toast('失敗', true); } finally { btn.disabled = false; } }
-        async function loadAnnouncements() { const list = document.getElementById('announcement-list'); try { const res = await fetch(`${APPS_SCRIPT_URL}?action=getAnnouncements`), r = await res.json(); cachedAnnouncements = r.data || []; renderAnnouncements(); } catch (e) { if(list) list.innerText = "載入失敗"; } }
-        function renderAnnouncements() { const list = document.getElementById('announcement-list'); if(!list) return; const isAdmin = ['Admin', '管理員', 'Teacher', '老師'].includes(currentUser?.role); const filtered = cachedAnnouncements.filter(a => isAdmin || a.visible !== 'N'); list.innerHTML = filtered.length ? filtered.map((ann) => { let res = safeJSONParse(ann.link, []); const pdfs = res.filter(r => isPdfUrl(r.url)); const hideTag = (isAdmin && ann.visible === 'N') ? '<span class="ml-2 bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold">隱藏中</span>' : ''; return `<div class="bg-white p-6 rounded-2xl border mb-4 relative group fade-in ${ann.visible === 'N' ? 'opacity-70 grayscale-[0.3]' : ''}">${isAdmin ? `<button onclick="openAnnouncementModal(${ann.id})" class="absolute top-4 right-4 text-xs text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-all">編輯</button>` : ''}<div class="text-[10px] font-mono text-emerald-600 font-bold mb-1 uppercase tracking-wider">${ann.time} ${hideTag}</div><h3 class="text-lg font-black text-slate-800 mb-2">${ann.title}</h3><div class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-4">${ann.content}</div>${pdfs.map(pdf => `<iframe src="${convertToEmbedPdfLink(pdf.url)}" class="resource-preview-iframe"></iframe>`).join('')}${res.length > 0 ? `<div class="pt-4 border-t border-slate-50 flex flex-wrap gap-2">${res.map(r => `<a href="${r.url}" target="_blank" class="text-xs bg-emerald-50 text-emerald-600 px-3 py-2 rounded-lg font-bold flex items-center gap-1 hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100">🔗 ${r.label}</a>`).join('')}</div>` : ''}</div>`; }).join('') : '<p class="text-center py-20 text-slate-400">目前尚無內容</p>'; }
-        function openAnnouncementModal(id) { const d = id ? cachedAnnouncements.find(a => a.id == id) : null; document.getElementById('ann-modal-title').innerText = d ? "編輯公告" : "發布新公告"; document.getElementById('ann-id').value = d ? d.id : ""; document.getElementById('ann-title').value = d ? d.title : ""; document.getElementById('ann-content').value = d ? d.content : ""; document.getElementById('ann-visible').value = d ? d.visible : "Y"; const container = document.getElementById('ann-resources-container'); container.innerHTML = ''; if (d) { let rData = safeJSONParse(d.link, []); if(d.link && !Array.isArray(rData)) rData = [{label:'下載', url:d.link}]; rData.forEach(r => addResourceRow(r.label, r.url)); } else { addResourceRow('', ''); } document.getElementById('announcement-modal').style.display = 'flex'; }
-        function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
-        async function submitAnnouncement() { const resData = []; document.querySelectorAll('.resource-row').forEach(row => { const l = row.querySelector('.res-label').value.trim(), u = row.querySelector('.res-url').value.trim(); if(l && u) resData.push({label: l, url: u}); }); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateAnnouncement', id: document.getElementById('ann-id').value, title: document.getElementById('ann-title').value, content: document.getElementById('ann-content').value, link: JSON.stringify(resData), visible: document.getElementById('ann-visible').value }) }); if((await res.json()).success) { toast('發布成功'); closeAnnouncementModal(); loadAnnouncements(); } } catch (e) { toast('失敗', true); } }
-        function addResourceRow(l='', u='') { const div = document.createElement('div'); div.className = "flex gap-2 mb-2 resource-row"; div.innerHTML = `<input type="text" placeholder="名稱" class="res-label flex-1 p-2 text-xs border rounded-lg" value="${l}"><input type="text" placeholder="網址" class="res-url flex-[2] p-2 text-xs border rounded-lg bg-slate-50" value="${u}"><button onclick="triggerFileUpload(this)" title="上傳" class="text-emerald-600 p-1 hover:bg-emerald-50 rounded">☁️</button><button onclick="this.parentElement.remove()" class="text-red-400 p-1 rounded hover:bg-red-50">✕</button>`; document.getElementById('ann-resources-container').appendChild(div); }
-        function triggerFileUpload(btn) { activeRowForUpload = btn.parentElement; document.getElementById('global-file-picker').click(); }
-        async function processFileSelection(event) { const file = event.target.files[0]; if (!file || !activeRowForUpload) return; const labelInput = activeRowForUpload.querySelector('.res-label'), urlInput = activeRowForUpload.querySelector('.res-url'); toast(`正在上傳：${file.name}...`); const reader = new FileReader(); reader.onload = async function(e) { try { const base64Data = e.target.result.split(',')[1]; const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadFile', fileName: file.name, mimeType: file.type, base64Data: base64Data }) }); const result = await res.json(); if (result.success) { if(labelInput && !labelInput.value) labelInput.value = file.name; if(urlInput) urlInput.value = result.url; toast('完成！'); } else toast(result.error, true); } catch (err) { toast('連線失敗', true); } }; reader.readAsDataURL(file); event.target.value = ''; }
-        function openProxyModal(g, n) { proxyTarget = { group: g, name: n }; document.getElementById('proxy-target-display').innerText = `${g} - ${n}`; document.getElementById('proxy-sign-modal').style.display = "flex"; }
-        function closeProxyModal() { document.getElementById('proxy-sign-modal').style.display = "none"; }
-        async function submitProxySignIn() { const btn = document.getElementById('proxy-submit-btn'); if(!btn) return; btn.disabled = true; try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'signIn', group: proxyTarget.group, name: proxyTarget.name, leaveType: document.getElementById('proxy-status-select').value, reason: document.getElementById('proxy-reason-input').value }) }); if ((await res.json()).success) { toast('調整完成'); closeProxyModal(); loadAdminDashboard(); } } catch (e) { toast('失敗', true); } finally { btn.disabled = false; } }
-        async function checkAttendance() { const div = document.getElementById('attendance-status'), btn = document.getElementById('signin-btn'); if(!div) return; try { const res = await fetch(`${APPS_SCRIPT_URL}?action=checkAttendance&group=${encodeURIComponent(currentUser.group)}&name=${encodeURIComponent(currentUser.name)}`); const r = await res.json(); div.innerHTML = r.signedIn ? `✅ 今日已完成簽到 (${r.time})` : `尚未簽到`; if(r.signedIn) btn?.classList.add('hidden'); else btn?.classList.remove('hidden'); } catch (e) {} }
-        async function performSignIn() { try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'signIn', group: currentUser.group, name: currentUser.name }) }); if ((await res.json()).success) { toast('簽到完成'); checkAttendance(); } } catch (e) {} }
-        async function loadHistoryData() { const list = document.getElementById('history-list'); if(!list) return; try { const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&name=${encodeURIComponent(currentUser.name)}&group=${encodeURIComponent(currentUser.group)}`); const r = await res.json(); if (r.success && r.data.length) { historyData = r.data; list.innerHTML = r.data.map((h, i) => `<div class="bg-white p-5 rounded-2xl border flex justify-between shadow-sm cursor-pointer hover:border-emerald-300 transition-all" onclick="showExamDetail(${i})"><div><div class="text-[10px] text-slate-400 mb-1">${h.timestamp}</div><div class="font-bold text-slate-700">${h.quizType}</div></div><div class="text-3xl font-black text-emerald-500">${h.score}</div></div>`).join(''); } else { list.innerHTML = '<p class="text-center py-20 text-slate-400">尚無紀錄</p>'; } } catch (e) {} }
-        async function startQuizFlow() { const type = document.getElementById('quiz-type-select')?.value; if (!type) return toast('請選擇科目', true); const btn = document.getElementById('start-quiz-btn'); btn.disabled = true; try { const resConfig = await fetch(`${APPS_SCRIPT_URL}?action=getConfig`), config = await resConfig.json(), quizConf = config['隨堂'] || config[type], now = new Date(); if (quizConf?.start && quizConf?.end) { const st = parseToTaipeiDate(quizConf.start), et = parseToTaipeiDate(quizConf.end); if (now < st || now > et) { toast(`測驗尚未開放`, true); btn.disabled = false; return; } } document.getElementById('quiz-init').classList.add('hidden'); document.getElementById('quiz-main').classList.remove('hidden'); const [q1, q2] = await Promise.all([fetchSingleSheet(QUIZ_GIDS['隨堂']), fetchSingleSheet(QUIZ_GIDS[type])]); quizData = [...q1, ...q2]; renderQuiz(); } catch (e) { btn.disabled = false; } }
-        function renderQuiz() { const content = document.getElementById('quiz-content'); if(!content) return; let h = `<div class="bg-emerald-50 p-3 rounded-xl mb-4 text-emerald-800 text-xs font-bold text-center">測驗進行中</div>`; quizData.forEach((q, i) => { const qId = `q${i + 1}`; let imgHtml = (q.photo && q.photo.includes('http')) ? `<img src="${convertToDirectLink(q.photo)}" class="quiz-image">` : ""; let opts = q.isBonus || q.type === 'fill' ? `<input type="text" class="w-full p-4 border rounded-xl" id="${qId}-input">` : [...q.options].sort(()=>Math.random()-0.5).map(o => `<label class="hover:bg-slate-50 border p-3 rounded-xl flex items-center mb-2 cursor-pointer text-sm"><input type="${q.type === 'single' ? 'radio' : 'checkbox'}" name="${qId}" value="${o}" class="mr-3 w-5 h-5 text-emerald-600"><span>${o}</span></label>`).join(''); h += `<div class="${q.isBonus ? 'bonus-card' : 'question-card'} p-6 rounded-2xl shadow-sm mb-6 bg-white border"><div>第 ${i + 1} 題</div><h3 class="font-bold mb-2 text-slate-800">${q.question}</h3>${imgHtml}<div class="mt-4">${opts}</div></div>`; }); h += `<button onclick="handleQuizSubmit()" id="quiz-final-btn" class="w-full py-4 btn-primary rounded-2xl font-bold shadow-xl">提交考卷</button>`; content.innerHTML = h; window.scrollTo(0,0); }
-        async function handleQuizSubmit() { const btn = document.getElementById('quiz-final-btn'); btn.disabled = true; const answers = quizData.map((q, i) => { let val = '未作答'; if(q.isBonus || q.type === 'fill') val = document.getElementById(`q${i + 1}-input`)?.value.trim() || '未作答'; else if(q.type === 'single') val = document.querySelector(`input[name="q${i + 1}"]:checked`)?.value || '未作答'; else val = Array.from(document.querySelectorAll(`input[name="q${i + 1}"]:checked`)).map(i => i.value).sort().join(', '); return { userAnswer: val, isBonus: q.isBonus, photo: q.photo, question: q.question }; }); try { const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitQuiz', group: currentUser.group, name: currentUser.name, quizType: document.getElementById('quiz-type-select').value, userAnswersJson: JSON.stringify(answers), quizDataJson: JSON.stringify(quizData) }) }); if ((await res.json()).status === 'success') { toast('提交成功'); switchView('results'); } } catch (e) { btn.disabled = false; } }
-        async function fetchSingleSheet(gid) { try { const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`); const text = await res.text(), data = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/)[1]); return data.table.rows.map(r => { if (!r.c[0]?.v) return null; return { question: r.c[0]?.v, type: r.c[1]?.v?.toLowerCase().trim() || 'single', options: r.c[2]?.v ? String(r.c[2].v).split(',').map(s=>s.trim()) : [], answer: String(r.c[3]?.v||'').split(',').map(s=>s.trim()), score: parseFloat(r.c[4]?.v||0), photo: r.c[5]?.v || '', isBonus: r.c[6]?.v === '是' || r.c[6]?.v === 'Yes' }; }).filter(q => q !== null); } catch(e) { return []; } }
-        
         function logout() { localStorage.removeItem('sh_user_secure'); location.reload(); }
-
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
