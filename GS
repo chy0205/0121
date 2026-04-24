@@ -2,7 +2,7 @@
  * 崇華十六期整合管理系統 - GAS 後端主程式 (全功能最終整合版)
  */
 
-const SPREADSHEET_ID = '1zgooij9pB4VIYGDti8QgbNu5VQVnd4Ke6UsYQnBrfsk';
+const SPREADSHEET_ID = '1M51ZoCcT5jXt7__Iy9nrClE_5gptjUZd6YVNzqz_FuI';
 
 function doGet(e) {
   const action = e.parameter.action;
